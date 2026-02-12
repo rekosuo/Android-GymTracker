@@ -32,8 +32,15 @@ You can:
 
 ### Build
 
-Build the APK
+Android Studio Otter 3 (2025.2.3) or newer
+
+* Install Android Studio
+* Open the project in Android Studio
+* Set Gradle JDK in Settings > Build, Execution, Deployment > Build Tools > Gradle > Gradle JDK
+* Build with Android Studio or with CLI
+
 ```bash
+# Build the APK in CLI
 cd project
 ./gradlew assembleDebug
 ```
