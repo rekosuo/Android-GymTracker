@@ -44,6 +44,7 @@ fun ExerciseListScreen(
                         )
                     }
                 },
+                // Menu button to open New Exercise and New Group
                 actions = {
                     IconButton(onClick = { showMenu = true }) {
                         Icon(painter = painterResource(id = R.drawable.ic_symbol_more_vert), "Menu")
@@ -52,6 +53,7 @@ fun ExerciseListScreen(
                         expanded = showMenu,
                         onDismissRequest = { showMenu = false }
                     ) {
+                        // New Exercise
                         DropdownMenuItem(
                             text = { Text("New Exercise") },
                             onClick = {
@@ -62,6 +64,7 @@ fun ExerciseListScreen(
                                 Icon(painter = painterResource(id = R.drawable.ic_symbol_add), null)
                             }
                         )
+                        // New Group
                         DropdownMenuItem(
                             text = { Text("New Group") },
                             onClick = {

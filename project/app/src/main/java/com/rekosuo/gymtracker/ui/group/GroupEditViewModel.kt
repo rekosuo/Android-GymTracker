@@ -14,6 +14,7 @@ import javax.inject.Inject
 data class GroupEditState(
     val groupName: String = "",
     val isFavorite: Boolean = false,
+    val searchQuery: String = "",
     val availableExercises: List<Exercise> = emptyList(),
     val selectedExerciseIds: Set<Long> = emptySet(),
     val isLoading: Boolean = false,
@@ -22,6 +23,7 @@ data class GroupEditState(
 )
 
 sealed class GroupEditEvent {
+    data class SearchQueryChanged(val query: String) : GroupEditEvent()
     data class NameChanged(val name: String) : GroupEditEvent()
     data class FavoriteToggled(val isFavorite: Boolean) : GroupEditEvent()
     data class ExerciseToggled(val exerciseId: Long) : GroupEditEvent()
@@ -33,6 +35,8 @@ class GroupEditViewModel @Inject constructor(
     private val repository: ExerciseRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
+
+    private var allExercises: List<Exercise> = emptyList()
 
     private val groupId: Long? = savedStateHandle.get<Long>("groupId")
 
@@ -50,6 +54,7 @@ class GroupEditViewModel @Inject constructor(
             try {
                 // Load all available exercises - use first() to get initial value
                 val exercises = repository.getAllExercises().first()
+                allExercises = exercises
                 _state.update { it.copy(availableExercises = exercises) }
 
                 // Load existing group if editing
@@ -92,6 +97,13 @@ class GroupEditViewModel @Inject constructor(
 
     fun onEvent(event: GroupEditEvent) {
         when (event) {
+            is GroupEditEvent.SearchQueryChanged -> {
+                val query = event.query
+                val filtered = if (query.isBlank()) allExercises
+                               else allExercises.filter { it.name.contains(query, ignoreCase = true) }
+                _state.update { it.copy(searchQuery = query, availableExercises = filtered) }
+            }
+
             is GroupEditEvent.NameChanged -> {
                 _state.update { it.copy(groupName = event.name) }
             }

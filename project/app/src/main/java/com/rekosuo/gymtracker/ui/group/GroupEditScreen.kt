@@ -131,6 +131,36 @@ fun GroupEditScreen(
                 }
             }
 
+            // Search bar
+            OutlinedTextField(
+                value = state.searchQuery,
+                onValueChange = {
+                    viewModel.onEvent(GroupEditEvent.SearchQueryChanged(it))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                placeholder = { Text("Search exercises...") },
+                leadingIcon = {
+                    Icon(painter = painterResource(id = R.drawable.ic_symbol_search), "Search")
+                },
+                trailingIcon = {
+                    if (state.searchQuery.isNotEmpty()) {
+                        IconButton(
+                            onClick = {
+                                viewModel.onEvent(GroupEditEvent.SearchQueryChanged(""))
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(id = R.drawable.ic_symbol_clear),
+                                "Clear"
+                            )
+                        }
+                    }
+                },
+                singleLine = true
+            )
+
             // Exercise selection section
             Text(
                 text = "Select Exercises",
