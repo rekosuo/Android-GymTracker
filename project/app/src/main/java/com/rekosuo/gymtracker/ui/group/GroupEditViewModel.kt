@@ -16,7 +16,7 @@ data class GroupEditState(
     val isFavorite: Boolean = false,
     val searchQuery: String = "",
     val availableExercises: List<Exercise> = emptyList(),
-    val selectedExerciseIds: Set<Long> = emptySet(),
+    val selectedExercises: List<Exercise> = emptyList(),
     val isLoading: Boolean = false,
     val isSaved: Boolean = false,
     val error: String? = null
@@ -27,8 +27,11 @@ sealed class GroupEditEvent {
     data class NameChanged(val name: String) : GroupEditEvent()
     data class FavoriteToggled(val isFavorite: Boolean) : GroupEditEvent()
     data class ExerciseToggled(val exerciseId: Long) : GroupEditEvent()
+    data class ExerciseMoved(val exerciseId: Long, val direction: MoveDirection) : GroupEditEvent()
     object SaveGroup : GroupEditEvent()
 }
+
+enum class MoveDirection { UP, DOWN }
 
 @HiltViewModel
 class GroupEditViewModel @Inject constructor(
@@ -84,7 +87,7 @@ class GroupEditViewModel @Inject constructor(
                     state.copy(
                         groupName = it.group.name,
                         isFavorite = it.group.isFavorite,
-                        selectedExerciseIds = it.exercises.map { ex -> ex.id }.toSet()
+                        selectedExercises = it.exercises
                     )
                 }
             }
@@ -114,12 +117,30 @@ class GroupEditViewModel @Inject constructor(
 
             is GroupEditEvent.ExerciseToggled -> {
                 _state.update { currentState ->
-                    val newSelectedIds = if (event.exerciseId in currentState.selectedExerciseIds) {
-                        currentState.selectedExerciseIds - event.exerciseId
+                    val isSelected = currentState.selectedExercises.any { it.id == event.exerciseId }
+                    val newSelected = if (isSelected) {
+                        currentState.selectedExercises.filter { it.id != event.exerciseId }
                     } else {
-                        currentState.selectedExerciseIds + event.exerciseId
+                        val exercise = allExercises.find { it.id == event.exerciseId }
+                            ?: return@update currentState
+                        currentState.selectedExercises + exercise
                     }
-                    currentState.copy(selectedExerciseIds = newSelectedIds)
+                    currentState.copy(selectedExercises = newSelected)
+                }
+            }
+
+            is GroupEditEvent.ExerciseMoved -> {
+                _state.update { currentState ->
+                    val list = currentState.selectedExercises.toMutableList()
+                    val index = list.indexOfFirst { it.id == event.exerciseId }
+                    if (index < 0) return@update currentState
+                    val targetIndex = when (event.direction) {
+                        MoveDirection.UP -> index - 1
+                        MoveDirection.DOWN -> index + 1
+                    }
+                    if (targetIndex !in list.indices) return@update currentState
+                    list[index] = list[targetIndex].also { list[targetIndex] = list[index] }
+                    currentState.copy(selectedExercises = list)
                 }
             }
 
@@ -159,7 +180,7 @@ class GroupEditViewModel @Inject constructor(
                 // Update exercise-group relationships
                 repository.updateGroupExercises(
                     savedGroupId,
-                    currentState.selectedExerciseIds.toList()
+                    currentState.selectedExercises.map { it.id }
                 )
 
                 _state.update { it.copy(isLoading = false, isSaved = true) }

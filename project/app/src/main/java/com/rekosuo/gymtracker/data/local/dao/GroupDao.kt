@@ -2,6 +2,7 @@
 package com.rekosuo.gymtracker.data.local.dao
 
 import androidx.room.*
+import com.rekosuo.gymtracker.data.local.entity.ExerciseEntity
 import com.rekosuo.gymtracker.data.local.entity.ExerciseGroupCrossRef
 import com.rekosuo.gymtracker.data.local.entity.ExerciseGroupEntity
 import com.rekosuo.gymtracker.data.local.entity.GroupWithExercises
@@ -59,4 +60,16 @@ interface GroupDao {
         ORDER BY exercise_groups.name ASC
     """)
     fun getGroupsForExercise(exerciseId: Long): Flow<List<ExerciseGroupEntity>>
+
+    // Ordered exercise queries
+    @Query("""
+        SELECT exercises.* FROM exercises
+        INNER JOIN exercise_group_cross_ref ON exercises.id = exercise_group_cross_ref.exerciseId
+        WHERE exercise_group_cross_ref.groupId = :groupId
+        ORDER BY exercise_group_cross_ref.orderIndex ASC
+    """)
+    suspend fun getOrderedExercisesForGroup(groupId: Long): List<ExerciseEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertExerciseGroupCrossRefs(crossRefs: List<ExerciseGroupCrossRef>)
 }

@@ -131,43 +131,6 @@ fun GroupEditScreen(
                 }
             }
 
-            // Search bar
-            OutlinedTextField(
-                value = state.searchQuery,
-                onValueChange = {
-                    viewModel.onEvent(GroupEditEvent.SearchQueryChanged(it))
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                placeholder = { Text("Search exercises...") },
-                leadingIcon = {
-                    Icon(painter = painterResource(id = R.drawable.ic_symbol_search), "Search")
-                },
-                trailingIcon = {
-                    if (state.searchQuery.isNotEmpty()) {
-                        IconButton(
-                            onClick = {
-                                viewModel.onEvent(GroupEditEvent.SearchQueryChanged(""))
-                            }
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_symbol_clear),
-                                "Clear"
-                            )
-                        }
-                    }
-                },
-                singleLine = true
-            )
-
-            // Exercise selection section
-            Text(
-                text = "Select Exercises",
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
-            )
-
             if (state.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -176,34 +139,117 @@ fun GroupEditScreen(
                     CircularProgressIndicator()
                 }
             } else {
-                if (state.availableExercises.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "No exercises available.\nCreate exercises first!",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                val selectedIds = state.selectedExercises.map { it.id }.toSet()
+                val unselectedExercises = state.availableExercises.filter {
+                    it.id !in selectedIds
+                }
+
+                LazyColumn(
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    // Selected exercises section
+                    if (state.selectedExercises.isNotEmpty()) {
+                        item {
+                            Text(
+                                text = "Selected Exercises",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                        }
+                        items(
+                            items = state.selectedExercises,
+                            key = { "selected_${it.id}" }
+                        ) { exercise ->
+                            SelectedExerciseItem(
+                                exercise = exercise,
+                                isFirst = exercise.id == state.selectedExercises.first().id,
+                                isLast = exercise.id == state.selectedExercises.last().id,
+                                onMoveUp = {
+                                    viewModel.onEvent(
+                                        GroupEditEvent.ExerciseMoved(exercise.id, MoveDirection.UP)
+                                    )
+                                },
+                                onMoveDown = {
+                                    viewModel.onEvent(
+                                        GroupEditEvent.ExerciseMoved(exercise.id, MoveDirection.DOWN)
+                                    )
+                                },
+                                onRemove = {
+                                    viewModel.onEvent(GroupEditEvent.ExerciseToggled(exercise.id))
+                                }
+                            )
+                        }
+                    }
+
+                    // Available exercises section
+                    item {
+                        // Search bar
+                        OutlinedTextField(
+                            value = state.searchQuery,
+                            onValueChange = {
+                                viewModel.onEvent(GroupEditEvent.SearchQueryChanged(it))
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = if (state.selectedExercises.isNotEmpty()) 8.dp else 0.dp),
+                            placeholder = { Text("Search exercises...") },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(id = R.drawable.ic_symbol_search),
+                                    "Search"
+                                )
+                            },
+                            trailingIcon = {
+                                if (state.searchQuery.isNotEmpty()) {
+                                    IconButton(
+                                        onClick = {
+                                            viewModel.onEvent(
+                                                GroupEditEvent.SearchQueryChanged("")
+                                            )
+                                        }
+                                    ) {
+                                        Icon(
+                                            painter = painterResource(
+                                                id = R.drawable.ic_symbol_clear
+                                            ),
+                                            "Clear"
+                                        )
+                                    }
+                                }
+                            },
+                            singleLine = true
                         )
                     }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.weight(1f),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
+
+                    // No exercises note, when the user has not created exercises
+                    if (unselectedExercises.isEmpty() && state.selectedExercises.isEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    text = "No exercises available.\nCreate exercises first!",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    } else {
                         items(
-                            items = state.availableExercises,
-                            key = { it.id }
+                            items = unselectedExercises,
+                            key = { "available_${it.id}" }
                         ) { exercise ->
                             ExerciseCheckItem(
                                 exercise = exercise,
-                                isSelected = exercise.id in state.selectedExerciseIds,
+                                isSelected = false,
                                 onToggle = {
-                                    viewModel.onEvent(GroupEditEvent.ExerciseToggled(exercise.id))
+                                    viewModel.onEvent(
+                                        GroupEditEvent.ExerciseToggled(exercise.id)
+                                    )
                                 }
                             )
                         }
@@ -227,6 +273,50 @@ fun GroupEditScreen(
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 Text(if (groupId == null) "Create Group" else "Save Changes")
+            }
+        }
+    }
+}
+
+@Composable
+fun SelectedExerciseItem(
+    exercise: Exercise,
+    isFirst: Boolean,
+    isLast: Boolean,
+    onMoveUp: () -> Unit,
+    onMoveDown: () -> Unit,
+    onRemove: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(modifier = modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 16.dp, top = 4.dp, bottom = 4.dp, end = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = exercise.name,
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier.weight(1f)
+            )
+            IconButton(onClick = onMoveUp, enabled = !isFirst) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_symbol_arrow_upward),
+                    contentDescription = "Move up"
+                )
+            }
+            IconButton(onClick = onMoveDown, enabled = !isLast) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_symbol_arrow_downward),
+                    contentDescription = "Move down"
+                )
+            }
+            IconButton(onClick = onRemove) {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_symbol_close),
+                    contentDescription = "Remove"
+                )
             }
         }
     }

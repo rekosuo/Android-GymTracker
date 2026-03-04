@@ -1,5 +1,6 @@
 package com.rekosuo.gymtracker.data.local
 
+import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
@@ -21,8 +22,11 @@ import com.rekosuo.gymtracker.data.local.entity.PerformanceEntity
         ExerciseGroupCrossRef::class,
         PerformanceEntity::class
     ],
-    version = 1,    // Increment for schema changes
-    exportSchema = false
+    version = 2,    // Increment for schema changes
+    exportSchema = true,
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2)
+    ]
 )
 // Register type converters and provide access to DAOs. Room generates implementation.
 @TypeConverters(Converters::class)

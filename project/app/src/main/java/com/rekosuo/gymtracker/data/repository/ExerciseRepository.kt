@@ -71,12 +71,12 @@ class ExerciseRepository @Inject constructor(
     }
 
     suspend fun getGroupWithExercises(groupId: Long): GroupWithExercises? {
-        return groupDao.getGroupWithExercises(groupId)?.let { relation ->
-            GroupWithExercises(
-                group = relation.group.toDomain(),
-                exercises = relation.exercises.map { it.toDomain() }
-            )
-        }
+        val group = groupDao.getGroupById(groupId) ?: return null
+        val exercises = groupDao.getOrderedExercisesForGroup(groupId)
+        return GroupWithExercises(
+            group = group.toDomain(),
+            exercises = exercises.map { it.toDomain() }
+        )
     }
 
     fun getAllGroupsWithExercises(): Flow<List<GroupWithExercises>> {
@@ -115,21 +115,16 @@ class ExerciseRepository @Inject constructor(
     }
 
     suspend fun updateGroupExercises(groupId: Long, exerciseIds: List<Long>) {
-        // First, get current exercises in the group
-        val currentExercises =
-            groupDao.getGroupWithExercises(groupId)?.exercises?.map { it.id } ?: emptyList()
-
-        // Remove exercises that are no longer in the group
-        val toRemove = currentExercises.filter { it !in exerciseIds }
-        toRemove.forEach { exerciseId ->
-            removeExerciseFromGroup(exerciseId, groupId)
+        // Clear all existing relationships and re-insert with correct order
+        groupDao.deleteAllExercisesFromGroup(groupId)
+        val crossRefs = exerciseIds.mapIndexed { index, exerciseId ->
+            ExerciseGroupCrossRef(
+                exerciseId = exerciseId,
+                groupId = groupId,
+                orderIndex = index
+            )
         }
-
-        // Add new exercises
-        val toAdd = exerciseIds.filter { it !in currentExercises }
-        toAdd.forEach { exerciseId ->
-            addExerciseToGroup(exerciseId, groupId)
-        }
+        groupDao.insertExerciseGroupCrossRefs(crossRefs)
     }
 
     // Mapper functions

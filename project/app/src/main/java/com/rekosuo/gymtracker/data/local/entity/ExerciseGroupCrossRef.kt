@@ -1,5 +1,6 @@
 package com.rekosuo.gymtracker.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -26,5 +27,7 @@ import androidx.room.Index
 )
 data class ExerciseGroupCrossRef(
     val exerciseId: Long,
-    val groupId: Long
+    val groupId: Long,
+    @ColumnInfo(defaultValue = "0")
+    val orderIndex: Int = 0
 )
