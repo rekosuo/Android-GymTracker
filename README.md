@@ -22,10 +22,7 @@ You can:
 * View days for the selected exercise.
 * View all exercises performed on a day.
 
-2. Implement drag and drop reordering into Group Edit Screen.
-* Drag and drop exercise items to reorder them within the group.
-
-3. Include rep tracking in the Graph view.
+2. Include rep tracking in the Graph view.
 
 ### Build
 
