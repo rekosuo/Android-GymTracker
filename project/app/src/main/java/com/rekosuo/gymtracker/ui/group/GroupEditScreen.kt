@@ -16,7 +16,6 @@ import com.rekosuo.gymtracker.domain.model.Exercise
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupEditScreen(
-    groupId: Long?,
     onNavigateBack: () -> Unit,
     viewModel: GroupEditViewModel = hiltViewModel()
 ) {
@@ -32,7 +31,7 @@ fun GroupEditScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (groupId == null) "New Group" else "Edit Group") },
+                title = { Text(if (state.isEditing) "Edit Group" else "New Group") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
@@ -272,7 +271,7 @@ fun GroupEditScreen(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                Text(if (groupId == null) "Create Group" else "Save Changes")
+                Text(if (state.isEditing) "Save Changes" else "Create Group")
             }
         }
     }

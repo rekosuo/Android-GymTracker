@@ -7,7 +7,10 @@ import com.rekosuo.gymtracker.data.repository.ExerciseRepository
 import com.rekosuo.gymtracker.domain.model.Exercise
 import com.rekosuo.gymtracker.domain.model.ExerciseGroup
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -17,6 +20,7 @@ data class GroupEditState(
     val searchQuery: String = "",
     val availableExercises: List<Exercise> = emptyList(),
     val selectedExercises: List<Exercise> = emptyList(),
+    val isEditing: Boolean = false,
     val isLoading: Boolean = false,
     val isSaved: Boolean = false,
     val error: String? = null
@@ -64,6 +68,7 @@ class GroupEditViewModel @Inject constructor(
                 groupId?.let { id ->
                     if (id != 0L) {
                         loadGroup(id)
+                        _state.update { it.copy(isEditing = true) }
                     }
                 }
 
@@ -103,7 +108,7 @@ class GroupEditViewModel @Inject constructor(
             is GroupEditEvent.SearchQueryChanged -> {
                 val query = event.query
                 val filtered = if (query.isBlank()) allExercises
-                               else allExercises.filter { it.name.contains(query, ignoreCase = true) }
+                else allExercises.filter { it.name.contains(query, ignoreCase = true) }
                 _state.update { it.copy(searchQuery = query, availableExercises = filtered) }
             }
 
@@ -117,7 +122,8 @@ class GroupEditViewModel @Inject constructor(
 
             is GroupEditEvent.ExerciseToggled -> {
                 _state.update { currentState ->
-                    val isSelected = currentState.selectedExercises.any { it.id == event.exerciseId }
+                    val isSelected =
+                        currentState.selectedExercises.any { it.id == event.exerciseId }
                     val newSelected = if (isSelected) {
                         currentState.selectedExercises.filter { it.id != event.exerciseId }
                     } else {

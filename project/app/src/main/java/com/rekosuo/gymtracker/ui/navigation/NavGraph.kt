@@ -10,11 +10,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.rekosuo.gymtracker.ui.exercise.ExerciseEditScreen
 import com.rekosuo.gymtracker.ui.exercise.ExerciseListScreen
+import com.rekosuo.gymtracker.ui.graph.ProgressGraphScreen
 import com.rekosuo.gymtracker.ui.group.GroupContentsScreen
 import com.rekosuo.gymtracker.ui.group.GroupEditScreen
 import com.rekosuo.gymtracker.ui.home.HomeScreen
 import com.rekosuo.gymtracker.ui.performance.PerformanceEntryScreen
-import com.rekosuo.gymtracker.ui.graph.ProgressGraphScreen
 
 // Navigation routes
 sealed class Screen(val route: String) {
@@ -137,10 +137,8 @@ fun NavGraph(
                     defaultValue = 0L
                 }
             )
-        ) { backStackEntry ->
-            val groupId = backStackEntry.arguments?.getLong("groupId")?.takeIf { it != 0L }
+        ) {
             GroupEditScreen(
-                groupId = groupId,
                 onNavigateBack = { navController.popBackStack() }
             )
         }
@@ -201,9 +199,7 @@ fun NavGraph(
             arguments = listOf(
                 navArgument("exerciseId") { type = NavType.LongType }
             )
-        ) { backStackEntry ->
-            val exerciseId = backStackEntry.arguments?.getLong("exerciseId") ?: 0L
-
+        ) {
             ProgressGraphScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateToPerformanceEntry = { exId, perfId ->
