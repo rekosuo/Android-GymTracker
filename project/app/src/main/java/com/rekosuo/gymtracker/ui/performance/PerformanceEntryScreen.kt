@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -17,6 +18,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
@@ -312,24 +315,21 @@ fun WeightInput(
         mutableStateOf(if (weight == 0f) "" else weight.toString().removeSuffix(".0"))
     }
     var isFocused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
 
-    Card(
+    Box(
         modifier = modifier
             .width(72.dp)
             .height(48.dp)
-            .combinedClickable(
-                onClick = { /* Opens keyboard via BasicTextField focus */ },
-                onLongClick = onLongClick
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
-        )
     ) {
-        Box(
+        Card(
             modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
         ) {
             Row(
+                modifier = Modifier.fillMaxSize(),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -350,6 +350,7 @@ fun WeightInput(
                     },
                     modifier = Modifier
                         .width(48.dp)
+                        .focusRequester(focusRequester)
                         .onFocusChanged { isFocused = it.isFocused },
                     textStyle = TextStyle(
                         fontSize = 16.sp,
@@ -386,12 +387,24 @@ fun WeightInput(
                 )
             }
         }
+        // Transparent overlay to intercept gestures above BasicTextField
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .combinedClickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                    onClick = { focusRequester.requestFocus() },
+                    onLongClick = onLongClick
+                )
+        )
     }
 }
 
 /**
  * Editable rep input field.
  */
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun RepInput(
     reps: Int,
@@ -404,68 +417,77 @@ fun RepInput(
     }
     var isFocused by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
 
-    Box {
+    Box(
+        modifier = modifier.size(48.dp)
+    ) {
         Card(
-            modifier = modifier
-                .size(48.dp),
+            modifier = Modifier.fillMaxSize(),
             colors = CardDefaults.cardColors(
                 containerColor = MaterialTheme.colorScheme.primaryContainer
-            ),
-            onClick = { /* Opens keyboard */ }
+            )
         ) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                BasicTextField(
-                    value = textValue,
-                    onValueChange = { newValue ->
-                        val filtered = newValue.filter { it.isDigit() }
-                        textValue = filtered
-                        val parsedValue = filtered.toIntOrNull()
-                        if (parsedValue != null) {
-                            onRepsChange(parsedValue)
-                        } else if (filtered.isEmpty()) {
-                            onRepsChange(0)
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onFocusChanged { isFocused = it.isFocused },
-                    textStyle = TextStyle(
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    singleLine = true,
-                    cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                    decorationBox = { innerTextField ->
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            if (textValue.isEmpty() && !isFocused) {
-                                Text(
-                                    text = "0",
-                                    style = TextStyle(
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold,
-                                        textAlign = TextAlign.Center,
-                                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
-                                            alpha = 0.5f
-                                        )
+            BasicTextField(
+                value = textValue,
+                onValueChange = { newValue ->
+                    val filtered = newValue.filter { it.isDigit() }
+                    textValue = filtered
+                    val parsedValue = filtered.toIntOrNull()
+                    if (parsedValue != null) {
+                        onRepsChange(parsedValue)
+                    } else if (filtered.isEmpty()) {
+                        onRepsChange(0)
+                    }
+                },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .focusRequester(focusRequester)
+                    .onFocusChanged { isFocused = it.isFocused },
+                textStyle = TextStyle(
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                ),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                decorationBox = { innerTextField ->
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        if (textValue.isEmpty() && !isFocused) {
+                            Text(
+                                text = "0",
+                                style = TextStyle(
+                                    fontSize = 18.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    textAlign = TextAlign.Center,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(
+                                        alpha = 0.5f
                                     )
                                 )
-                            }
-                            innerTextField()
+                            )
                         }
+                        innerTextField()
                     }
-                )
-            }
+                }
+            )
         }
+
+        // Transparent overlay to intercept gestures above BasicTextField
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .combinedClickable(
+                    indication = null,
+                    interactionSource = remember { MutableInteractionSource() },
+                    onClick = { focusRequester.requestFocus() },
+                    onLongClick = { showMenu = true }
+                )
+        )
 
         // Long press menu for delete
         DropdownMenu(
