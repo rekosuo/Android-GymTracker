@@ -57,6 +57,7 @@ fun NavGraph(
         startDestination = startDestination,
         modifier = modifier
     ) {
+        // Home Screen
         composable(Screen.Home.route) {
             HomeScreen(
                 onNavigateToExerciseList = {
@@ -83,6 +84,7 @@ fun NavGraph(
             )
         }
 
+        // Exercise List Screen
         composable(Screen.ExerciseList.route) {
             ExerciseListScreen(
                 onNavigateBack = { navController.popBackStack() },
@@ -113,6 +115,7 @@ fun NavGraph(
             )
         }
 
+        // Exercise Edit Screen
         composable(
             route = Screen.ExerciseEdit.route,
             arguments = listOf(
@@ -129,6 +132,7 @@ fun NavGraph(
             )
         }
 
+        // Group Edit Screen
         composable(
             route = Screen.GroupEdit.route,
             arguments = listOf(
@@ -143,6 +147,7 @@ fun NavGraph(
             )
         }
 
+        // Group Contents Screen
         composable(
             route = Screen.GroupContents.route,
             arguments = listOf(
@@ -208,6 +213,7 @@ fun NavGraph(
             )
         }
 
+        // Calendar Screen
         composable(
             route = Screen.Calendar.route,
             arguments = listOf(
