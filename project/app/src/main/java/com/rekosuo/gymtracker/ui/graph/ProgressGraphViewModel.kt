@@ -5,28 +5,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rekosuo.gymtracker.data.repository.ExerciseRepository
 import com.rekosuo.gymtracker.data.repository.PerformanceRepository
-import com.rekosuo.gymtracker.domain.model.Performance
+import com.rekosuo.gymtracker.domain.model.GraphDataPoint
+import com.rekosuo.gymtracker.domain.model.filterByTime
+import com.rekosuo.gymtracker.domain.model.toGraphDataPoint
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-
-/**
- * Represents a single data point on the progress graph.
- * Contains all computed metrics to support multiple display modes.
- * Computed on-the-fly from Performance.sets - no database changes needed.
- */
-data class GraphDataPoint(
-    val performanceId: Long,
-    val date: Long,
-    val maxWeight: Float,
-    val minWeight: Float,
-    val avgWeight: Float,
-    val totalSets: Int,
-    val totalReps: Int
-)
 
 /**
  * Display mode for the graph.
@@ -119,10 +106,7 @@ class ProgressGraphViewModel @Inject constructor(
                         _state.update { currentState ->
                             currentState.copy(
                                 dataPoints = dataPoints,
-                                filteredDataPoints = filterByTimeRange(
-                                    dataPoints,
-                                    currentState.timeRange
-                                ),
+                                filteredDataPoints = dataPoints.filterByTime(currentState.timeRange.months),
                                 isLoading = false
                             )
                         }
@@ -141,10 +125,7 @@ class ProgressGraphViewModel @Inject constructor(
                 _state.update { currentState ->
                     currentState.copy(
                         timeRange = event.timeRange,
-                        filteredDataPoints = filterByTimeRange(
-                            currentState.dataPoints,
-                            event.timeRange
-                        )
+                        filteredDataPoints = currentState.dataPoints.filterByTime(event.timeRange.months)
                     )
                 }
             }
@@ -157,36 +138,5 @@ class ProgressGraphViewModel @Inject constructor(
 
     fun clearError() {
         _state.update { it.copy(error = null) }
-    }
-
-    /**
-     * Transforms a Performance into a GraphDataPoint.
-     * All metrics computed on-the-fly from the sets list.
-     * This keeps the data layer clean and avoids denormalization.
-     */
-    private fun Performance.toGraphDataPoint(): GraphDataPoint {
-        val weights = sets.map { it.weight }
-        return GraphDataPoint(
-            performanceId = id,
-            date = date,
-            maxWeight = weights.maxOrNull() ?: 0f,
-            minWeight = weights.minOrNull() ?: 0f,
-            avgWeight = if (weights.isNotEmpty()) weights.average().toFloat() else 0f,
-            totalSets = sets.size,
-            totalReps = sets.sumOf { it.reps }
-        )
-    }
-
-    /**
-     * Filters data points by time range.
-     */
-    private fun filterByTimeRange(
-        dataPoints: List<GraphDataPoint>,
-        timeRange: TimeRange
-    ): List<GraphDataPoint> {
-        if (timeRange.months == null) return dataPoints
-
-        val cutoffTime = System.currentTimeMillis() - (timeRange.months * 30L * 24 * 60 * 60 * 1000)
-        return dataPoints.filter { it.date >= cutoffTime }
     }
 }

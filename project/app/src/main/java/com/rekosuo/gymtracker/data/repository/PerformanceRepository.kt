@@ -67,11 +67,6 @@ class PerformanceRepository @Inject constructor(
         performanceDao.deletePerformance(performance.toEntity())
     }
 
-    // Delete all performances for an exercise
-    suspend fun deleteAllPerformancesForExercise(exerciseId: Long) {
-        performanceDao.deleteAllPerformancesForExercise(exerciseId)
-    }
-
     // Mapper functions - Convert between Entity and Domain models
     private fun PerformanceEntity.toDomain() = Performance(
         id = id,

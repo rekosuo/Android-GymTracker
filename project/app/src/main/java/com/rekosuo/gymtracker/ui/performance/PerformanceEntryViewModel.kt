@@ -8,6 +8,9 @@ import com.rekosuo.gymtracker.data.repository.PerformanceRepository
 import com.rekosuo.gymtracker.domain.model.Performance
 import com.rekosuo.gymtracker.domain.model.SetEntry
 import com.rekosuo.gymtracker.domain.model.WeightRow
+import com.rekosuo.gymtracker.domain.model.nextStartOrder
+import com.rekosuo.gymtracker.domain.model.toSets
+import com.rekosuo.gymtracker.domain.model.toWeightRows
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -131,7 +134,7 @@ class PerformanceEntryViewModel @Inject constructor(
                 if (performanceId != 0L) {
                     val performance = performanceRepository.getPerformanceById(performanceId)
                     if (performance != null) {
-                        val weightRows = setsToWeightRows(performance.sets)
+                        val weightRows = performance.sets.toWeightRows()
                         _state.update {
                             it.copy(
                                 performanceId = performance.id,
@@ -194,12 +197,12 @@ class PerformanceEntryViewModel @Inject constructor(
             val newRow = WeightRow(
                 weight = lastWeight,
                 reps = emptyList(),
-                startOrder = calculateNextOrder(currentState.weightRows)
+                startOrder = currentState.weightRows.nextStartOrder()
             )
             val newRows = currentState.weightRows + newRow
             currentState.copy(
                 weightRows = newRows,
-                sets = weightRowsToSets(newRows)
+                sets = newRows.toSets()
             )
         }
     }
@@ -219,7 +222,7 @@ class PerformanceEntryViewModel @Inject constructor(
             }
             currentState.copy(
                 weightRows = newRows,
-                sets = weightRowsToSets(newRows)
+                sets = newRows.toSets()
             )
         }
     }
@@ -241,7 +244,7 @@ class PerformanceEntryViewModel @Inject constructor(
             }
             currentState.copy(
                 weightRows = newRows,
-                sets = weightRowsToSets(newRows)
+                sets = newRows.toSets()
             )
         }
     }
@@ -264,7 +267,7 @@ class PerformanceEntryViewModel @Inject constructor(
             }
             currentState.copy(
                 weightRows = newRows,
-                sets = weightRowsToSets(newRows)
+                sets = newRows.toSets()
             )
         }
     }
@@ -277,7 +280,7 @@ class PerformanceEntryViewModel @Inject constructor(
             val newRows = currentState.weightRows.filterIndexed { index, _ -> index != rowIndex }
             currentState.copy(
                 weightRows = newRows,
-                sets = weightRowsToSets(newRows)
+                sets = newRows.toSets()
             )
         }
     }
@@ -298,7 +301,7 @@ class PerformanceEntryViewModel @Inject constructor(
             }
             currentState.copy(
                 weightRows = newRows,
-                sets = weightRowsToSets(newRows)
+                sets = newRows.toSets()
             )
         }
     }
@@ -391,72 +394,4 @@ class PerformanceEntryViewModel @Inject constructor(
         _state.update { it.copy(error = null) }
     }
 
-    // CONVERSION UTILITIES
-
-    /**
-     * Converts a flat list of SetEntries to WeightRows for UI display.
-     *
-     * This function groups consecutive sets with the same weight into single rows.
-     * Sets are processed in order, so changing weight creates a new row even if
-     * returning to a previously used weight.
-     *
-     * Example:
-     * Input:  [SetEntry(20, 10, 0), SetEntry(20, 10, 1), SetEntry(25, 8, 2), SetEntry(20, 12, 3)]
-     * Output: [WeightRow(20, [10,10], 0), WeightRow(25, [8], 2), WeightRow(20, [12], 3)]
-     */
-    private fun setsToWeightRows(sets: List<SetEntry>): List<WeightRow> {
-        if (sets.isEmpty()) return emptyList()
-
-        val sortedSets = sets.sortedBy { it.order }
-        val rows = mutableListOf<WeightRow>()
-        var currentWeight = sortedSets.first().weight
-        var currentReps = mutableListOf<Int>()
-        var startOrder = sortedSets.first().order
-
-        for (set in sortedSets) {
-            if (set.weight == currentWeight) {
-                currentReps.add(set.reps)
-            } else {
-                // Weight changed - save current row and start new one
-                rows.add(WeightRow(currentWeight, currentReps.toList(), startOrder))
-                currentWeight = set.weight
-                currentReps = mutableListOf(set.reps)
-                startOrder = set.order
-            }
-        }
-
-        // Add the last row
-        rows.add(WeightRow(currentWeight, currentReps.toList(), startOrder))
-
-        return rows
-    }
-
-    /**
-     * Converts WeightRows back to a flat list of SetEntries.
-     *
-     * This flattens the row structure while preserving chronological order.
-     * Order values are recalculated to be continuous (0, 1, 2, ...).
-     */
-    private fun weightRowsToSets(rows: List<WeightRow>): List<SetEntry> {
-        val sets = mutableListOf<SetEntry>()
-        var order = 0
-
-        for (row in rows) {
-            for (reps in row.reps) {
-                sets.add(SetEntry(weight = row.weight, reps = reps, order = order))
-                order++
-            }
-        }
-
-        return sets
-    }
-
-    /**
-     * Calculates the next order value based on existing rows.
-     */
-    private fun calculateNextOrder(rows: List<WeightRow>): Int {
-        if (rows.isEmpty()) return 0
-        val lastRow = rows.last()
-        return lastRow.startOrder + lastRow.reps.size
-    }
 }

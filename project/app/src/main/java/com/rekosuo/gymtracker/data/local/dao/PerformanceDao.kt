@@ -33,7 +33,4 @@ interface PerformanceDao {
     
     @Delete
     suspend fun deletePerformance(performance: PerformanceEntity)
-    
-    @Query("DELETE FROM performances WHERE exerciseId = :exerciseId")
-    suspend fun deleteAllPerformancesForExercise(exerciseId: Long)
 }

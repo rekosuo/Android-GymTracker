@@ -89,9 +89,7 @@ class ExerciseViewModel @Inject constructor(
             is ExerciseListEvent.ToggleFavorite -> {
                 viewModelScope.launch {
                     try {
-                        repository.updateExercise(
-                            event.exercise.copy(isFavorite = !event.exercise.isFavorite)
-                        )
+                        repository.toggleExerciseFavorite(event.exercise)
                     } catch (e: Exception) {
                         _error.value = "Failed to update favorite: ${e.message}"
                     }
@@ -111,9 +109,7 @@ class ExerciseViewModel @Inject constructor(
             is ExerciseListEvent.ToggleFavoriteGroup -> {
                 viewModelScope.launch {
                     try {
-                        repository.updateGroup(
-                            event.group.copy(isFavorite = !event.group.isFavorite)
-                        )
+                        repository.toggleGroupFavorite(event.group)
                     } catch (e: Exception) {
                         _error.value = "Failed to update favorite: ${e.message}"
                     }

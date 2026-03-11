@@ -51,9 +51,7 @@ class HomeViewModel @Inject constructor(
             is HomeEvent.ToggleFavoriteExercise -> {
                 viewModelScope.launch {
                     try {
-                        repository.updateExercise(
-                            event.exercise.copy(isFavorite = !event.exercise.isFavorite)
-                        )
+                        repository.toggleExerciseFavorite(event.exercise)
                     } catch (e: Exception) {
                         // Handle error
                     }
@@ -63,9 +61,7 @@ class HomeViewModel @Inject constructor(
             is HomeEvent.ToggleFavoriteGroup -> {
                 viewModelScope.launch {
                     try {
-                        repository.updateGroup(
-                            event.group.copy(isFavorite = !event.group.isFavorite)
-                        )
+                        repository.toggleGroupFavorite(event.group)
                     } catch (e: Exception) {
                         // Handle error
                     }

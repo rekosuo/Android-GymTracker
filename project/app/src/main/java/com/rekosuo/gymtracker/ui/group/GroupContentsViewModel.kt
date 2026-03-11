@@ -77,9 +77,7 @@ class GroupContentsViewModel @Inject constructor(
             is GroupContentsEvent.ToggleFavoriteExercise -> {
                 viewModelScope.launch {
                     try {
-                        repository.updateExercise(
-                            event.exercise.copy(isFavorite = !event.exercise.isFavorite)
-                        )
+                        repository.toggleExerciseFavorite(event.exercise)
                         loadGroupContents() // Refresh to show updated state
                     } catch (e: Exception) {
                         _state.update {

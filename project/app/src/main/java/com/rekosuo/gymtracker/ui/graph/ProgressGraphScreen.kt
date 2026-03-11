@@ -18,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.rekosuo.gymtracker.R
+import com.rekosuo.gymtracker.domain.model.GraphDataPoint
 import java.text.SimpleDateFormat
 import java.util.*
 
