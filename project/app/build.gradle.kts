@@ -84,8 +84,15 @@ dependencies {
 
     // Testing
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    androidTestImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(libs.kotlinx.coroutines.test)
+    androidTestImplementation(libs.turbine)
+    androidTestImplementation(libs.androidx.room.testing)
+    androidTestImplementation(libs.androidx.arch.core.testing)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.tooling)
