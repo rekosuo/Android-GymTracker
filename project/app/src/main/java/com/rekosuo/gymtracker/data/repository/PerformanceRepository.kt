@@ -2,13 +2,13 @@ package com.rekosuo.gymtracker.data.repository
 
 import com.rekosuo.gymtracker.data.local.dao.PerformanceDao
 import com.rekosuo.gymtracker.data.local.entity.PerformanceEntity
-import com.rekosuo.gymtracker.data.local.entity.SetEntry as EntitySetEntry
 import com.rekosuo.gymtracker.domain.model.Performance
 import com.rekosuo.gymtracker.domain.model.SetEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.rekosuo.gymtracker.data.local.entity.SetEntry as EntitySetEntry
 
 /**
  * Single source of truth for performance data.
@@ -42,13 +42,36 @@ class PerformanceRepository @Inject constructor(
         return performanceDao.getPerformanceByDate(exerciseId, date)?.toDomain()
     }
 
-    // Get performances within a date range
-    fun getPerformancesByDateRange(
+    // Get exercise performances within a date range
+    fun getExercisePerformancesByDateRange(
         exerciseId: Long,
         startDate: Long,
         endDate: Long
     ): Flow<List<Performance>> {
-        return performanceDao.getPerformancesByDateRange(exerciseId, startDate, endDate)
+        return performanceDao.getExercisePerformancesByDateRange(exerciseId, startDate, endDate)
+            .map { entities -> entities.map { it.toDomain() } }
+    }
+
+    // Get multiple exercise performances within a date range
+    fun getMultipleExercisePerformancesByDateRange(
+        exerciseIds: List<Long>,
+        startDate: Long,
+        endDate: Long
+    ): Flow<List<Performance>> {
+        return performanceDao.getMultipleExercisePerformancesByDateRange(
+            exerciseIds,
+            startDate,
+            endDate
+        )
+            .map { entities -> entities.map { it.toDomain() } }
+    }
+
+    // Get all exercise performances within a date range
+    fun getAllExercisePerformancesByDateRange(
+        startDate: Long,
+        endDate: Long
+    ): Flow<List<Performance>> {
+        return performanceDao.getAllPerformancesByDateRange(startDate, endDate)
             .map { entities -> entities.map { it.toDomain() } }
     }
 

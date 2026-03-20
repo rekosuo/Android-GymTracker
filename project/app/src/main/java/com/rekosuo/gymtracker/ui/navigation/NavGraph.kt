@@ -41,8 +41,14 @@ sealed class Screen(val route: String) {
         fun createRoute(exerciseId: Long) = "progress_graph/$exerciseId"
     }
 
-    object Calendar : Screen("calendar/{exerciseId}") {
-        fun createRoute(exerciseId: Long) = "calendar/$exerciseId"
+    object Calendar : Screen("calendar?exerciseId={exerciseId}&groupId={groupId}") {
+        fun createRoute(exerciseId: Long = 0, groupId: Long = 0): String {
+            return if (exerciseId == 0L) {
+                "calendar?groupId=$groupId"
+            } else {
+                "calendar?exerciseId=$exerciseId"
+            }
+        }
     }
 }
 
@@ -217,7 +223,14 @@ fun NavGraph(
         composable(
             route = Screen.Calendar.route,
             arguments = listOf(
-                navArgument("exerciseId") { type = NavType.LongType }
+                navArgument("exerciseId") {
+                    type = NavType.LongType
+                    defaultValue = 0L
+                },
+                navArgument("groupId") {
+                    type = NavType.LongType
+                    defaultValue = 0L
+                }
             )
         ) {
             // CalendarScreen will be implemented in Phase 5

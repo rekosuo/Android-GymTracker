@@ -74,6 +74,16 @@ data class WeightRow(
 )
 
 /**
+ * Represents a single performance summary.
+ * Used in the calendar screen.
+ */
+data class PerformanceSummary(
+    val exerciseName: String,
+    val weightRows: List<WeightRow>,
+    val notes: String
+)
+
+/**
  * A single data point on the progress graph.
  * Contains all computed metrics to support multiple display modes.
  * Computed on-the-fly from Performance.sets.
