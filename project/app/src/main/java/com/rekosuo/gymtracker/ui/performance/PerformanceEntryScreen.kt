@@ -78,7 +78,7 @@ import com.rekosuo.gymtracker.ui.components.PerformanceOptionsMenu
 fun PerformanceEntryScreen(
     onNavigateBack: () -> Unit,
     onNavigateToGraph: () -> Unit,
-    onNavigateToCalendar: () -> Unit,
+    onNavigateToExerciseCalendar: () -> Unit,
     onEditExercise: () -> Unit,
     viewModel: PerformanceEntryViewModel = hiltViewModel()
 ) {
@@ -111,7 +111,7 @@ fun PerformanceEntryScreen(
                 actions = {
                     PerformanceOptionsMenu(
                         onNavigateToGraph = onNavigateToGraph,
-                        onNavigateToCalendar = onNavigateToCalendar,
+                        onNavigateToExerciseCalendar = onNavigateToExerciseCalendar,
                         onEditExercise = onEditExercise,
                         onDeletePerformance = {
                             viewModel.onEvent(PerformanceEntryEvent.DeletePerformance)

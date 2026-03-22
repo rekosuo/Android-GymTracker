@@ -3,9 +3,11 @@ package com.rekosuo.gymtracker.ui.calendar
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rekosuo.gymtracker.data.repository.ExerciseRepository
 import com.rekosuo.gymtracker.data.repository.PerformanceRepository
 import com.rekosuo.gymtracker.domain.model.Performance
 import com.rekosuo.gymtracker.domain.model.PerformanceSummary
+import com.rekosuo.gymtracker.domain.model.toWeightRows
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -50,82 +52,55 @@ data class CalendarState(
  */
 sealed class CalendarScreenEvent {
     data class MonthChanged(val month: YearMonth) : CalendarScreenEvent()
-    data class DaySelected(val day: LocalDate) : CalendarScreenEvent()
+    data class DaySelected(val day: Int) : CalendarScreenEvent()
     object DismissDayDialog : CalendarScreenEvent()
 }
 
 @HiltViewModel
 class CalendarViewModel @Inject constructor(
-    private val repository: PerformanceRepository,
+    private val performanceRepository: PerformanceRepository,
+    private val exerciseRepository: ExerciseRepository,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val exerciseId: Long = savedStateHandle.get<Long>("exerciseId") ?: 0L
     private val groupId: Long = savedStateHandle.get<Long>("groupId") ?: 0L
 
+    private var groupExerciseIds: List<Long> = emptyList()
 
     private val _state = MutableStateFlow(CalendarState())
     val state = _state.asStateFlow()
 
     init {
-        getMode()
-        loadData()
-    }
-
-    private fun getMode() {
-        if (exerciseId != 0L) {
-            _state.update { it.copy(mode = CalendarMode.EXERCISE) }
-        } else if (groupId != 0L) {
-            _state.update { it.copy(mode = CalendarMode.GROUP) }
-        }
-    }
-
-    private fun loadData() {
         viewModelScope.launch {
+            initModeAndTitle()
             loadPerformances()
         }
     }
 
-    private suspend fun loadPerformances() {
-
-        val month = _state.value.currentMonth.atEndOfMonth()
-
-        val startOfMonth = month.withDayOfMonth(1)
-            .atStartOfDay(ZoneId.systemDefault())
-            .toInstant().toEpochMilli()
-
-        val endOfMonth = month.with(TemporalAdjusters.lastDayOfMonth())
-            .atTime(23, 59, 59, 999_000_000)
-            .atZone(ZoneId.systemDefault())
-            .toInstant().toEpochMilli()
-
-        _state.update { it.copy(isLoading = true) }
-
-        try {
-            val zoneId = ZoneId.systemDefault()
-            val performances =
-                repository.getAllExercisePerformancesByDateRange(startOfMonth, endOfMonth).first()
-            val groupedByDay = performances.groupBy { performance ->
-                Instant.ofEpochMilli(performance.date)
-                    .atZone(zoneId).toLocalDate()
+    private suspend fun initModeAndTitle() {
+        when {
+            exerciseId != 0L -> {
+                val exercise = exerciseRepository.getExerciseById(exerciseId)
+                _state.update {
+                    it.copy(
+                        mode = CalendarMode.EXERCISE,
+                        title = exercise?.name ?: "Calendar"
+                    )
+                }
             }
-
-            val days = groupedByDay.keys.map { localDate -> localDate.dayOfMonth }
-                .toSet()
-
-            _state.update {
-                it.copy(
-                    performancesByDate = groupedByDay,
-                    highlightedDays = days,
-                    isLoading = false
-                )
+            groupId != 0L -> {
+                val groupWithExercises = exerciseRepository.getGroupWithExercises(groupId)
+                groupExerciseIds = groupWithExercises?.exercises?.map { it.id } ?: emptyList()
+                _state.update {
+                    it.copy(
+                        mode = CalendarMode.GROUP,
+                        title = groupWithExercises?.group?.name ?: "Calendar"
+                    )
+                }
             }
-        } catch (e: Exception) {
-            _state.update {
-                it.copy(
-                    isLoading = false,
-                    error = "Failed to load performances: ${e.message}"
-                )
+            else -> {
+                _state.update { it.copy(title = "Calendar") }
             }
         }
     }
@@ -143,12 +118,101 @@ class CalendarViewModel @Inject constructor(
                 }
             }
 
-            is CalendarScreenEvent.DaySelected -> {
-
-            }
+            is CalendarScreenEvent.DaySelected -> getPerformanceSummaries(event.day)
 
             is CalendarScreenEvent.DismissDayDialog -> {
+                _state.update { it.copy(showDayDialog = false) }
+            }
+        }
+    }
 
+    private fun getMonthStartEnd(): Pair<Long, Long> {
+        val month = _state.value.currentMonth.atEndOfMonth()
+
+        val startOfMonth = month.withDayOfMonth(1)
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant().toEpochMilli()
+
+        val endOfMonth = month.with(TemporalAdjusters.lastDayOfMonth())
+            .atTime(23, 59, 59, 999_000_000)
+            .atZone(ZoneId.systemDefault())
+            .toInstant().toEpochMilli()
+
+        return Pair(startOfMonth, endOfMonth)
+    }
+
+    private suspend fun loadPerformances() {
+
+        val monthStartEnd = getMonthStartEnd()
+
+        _state.update { it.copy(isLoading = true) }
+
+        try {
+            val zoneId = ZoneId.systemDefault()
+            val performances = when (_state.value.mode) {
+                CalendarMode.ALL -> performanceRepository.getAllExercisePerformancesByDateRange(
+                    monthStartEnd.first, monthStartEnd.second
+                ).first()
+
+                CalendarMode.EXERCISE -> performanceRepository.getExercisePerformancesByDateRange(
+                    exerciseId, monthStartEnd.first, monthStartEnd.second
+                ).first()
+
+                CalendarMode.GROUP -> {
+                    if (groupExerciseIds.isEmpty()) emptyList()
+                    else performanceRepository.getMultipleExercisePerformancesByDateRange(
+                        groupExerciseIds, monthStartEnd.first, monthStartEnd.second
+                    ).first()
+                }
+            }
+            val groupedByDay = performances.groupBy { performance ->
+                Instant.ofEpochMilli(performance.date)
+                    .atZone(zoneId).toLocalDate()
+            }
+
+            val daysWithPerformances = groupedByDay.keys.map { localDate -> localDate.dayOfMonth }
+                .toSet()
+
+            val exerciseIds: Set<Long> = performances.mapTo(HashSet()) { it.exerciseId }
+
+            val exerciseNames = exerciseRepository.getExerciseNamesByIds(exerciseIds)
+
+            _state.update {
+                it.copy(
+                    performancesByDate = groupedByDay,
+                    highlightedDays = daysWithPerformances,
+                    exerciseNames = exerciseNames,
+                    isLoading = false
+                )
+            }
+        } catch (e: Exception) {
+            _state.update {
+                it.copy(
+                    isLoading = false,
+                    error = "Failed to load performances: ${e.message}"
+                )
+            }
+        }
+    }
+
+    private fun getPerformanceSummaries(day: Int) {
+        val date = _state.value.currentMonth.atDay(day)
+
+        val performances = _state.value.performancesByDate[date]
+
+        if (performances != null) {
+            val summaries = performances.map {
+                PerformanceSummary(
+                    exerciseName = _state.value.exerciseNames[it.exerciseId] ?: "Unknown",
+                    notes = it.notes,
+                    weightRows = it.sets.toWeightRows()
+                )
+            }
+            _state.update {
+                it.copy(
+                    selectedSummaries = summaries,
+                    showDayDialog = true
+                )
             }
         }
     }

@@ -1,6 +1,12 @@
 package com.rekosuo.gymtracker.data.local.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.MapColumn
+import androidx.room.Query
+import androidx.room.Update
 import com.rekosuo.gymtracker.data.local.entity.ExerciseEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -14,6 +20,9 @@ interface ExerciseDao {
 
     @Query("SELECT * FROM exercises WHERE id = :id")
     suspend fun getExerciseById(id: Long): ExerciseEntity?
+
+    @Query("SELECT id, name FROM exercises WHERE id IN (:ids)")
+    suspend fun getExerciseNamesByIds(ids: Set<Long>): Map<@MapColumn(columnName = "id") Long, @MapColumn(columnName = "name") String>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertExercise(exercise: ExerciseEntity): Long

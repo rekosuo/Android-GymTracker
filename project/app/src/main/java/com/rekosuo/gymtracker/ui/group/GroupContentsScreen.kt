@@ -38,7 +38,8 @@ fun GroupContentsScreen(
     onExerciseClick: (Long) -> Unit,
     onEditExercise: (Long) -> Unit,
     onNavigateToGraph: (Long) -> Unit,
-    onNavigateToCalendar: (Long) -> Unit,
+    onNavigateToExerciseCalendar: (Long) -> Unit,
+    onNavigateToGroupCalendar: () -> Unit,
     viewModel: GroupContentsViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
@@ -52,6 +53,14 @@ fun GroupContentsScreen(
                         Icon(
                             painter = painterResource(id = R.drawable.ic_symbol_arrow_back),
                             "Back"
+                        )
+                    }
+                },
+                actions = {
+                    IconButton(onClick = onNavigateToGroupCalendar) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_symbol_calendar_today),
+                            contentDescription = "Group Calendar"
                         )
                     }
                 }
@@ -140,7 +149,7 @@ fun GroupContentsScreen(
                                     )
                                 },
                                 onNavigateToGraph = { onNavigateToGraph(exercise.id) },
-                                onNavigateToCalendar = { onNavigateToCalendar(exercise.id) },
+                                onNavigateToExerciseCalendar = { onNavigateToExerciseCalendar(exercise.id) },
                                 onDelete = {
                                     viewModel.onEvent(
                                         GroupContentsEvent.DeleteExercise(exercise)

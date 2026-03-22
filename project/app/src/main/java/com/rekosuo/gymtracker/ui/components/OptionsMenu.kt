@@ -21,7 +21,7 @@ import com.rekosuo.gymtracker.R
  * @param isFavorite Current favorite status
  * @param onToggleFavorite Toggle favorite status callback
  * @param onNavigateToGraph Navigate to progress graph
- * @param onNavigateToCalendar Navigate to calendar view
+ * @param onNavigateToExerciseCalendar Navigate to calendar view for this exercise
  * @param onEdit Navigate to edit exercise
  * @param onDelete Delete callback
  */
@@ -32,7 +32,7 @@ fun ExerciseOptionsMenu(
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
     onNavigateToGraph: () -> Unit,
-    onNavigateToCalendar: () -> Unit,
+    onNavigateToExerciseCalendar: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
@@ -94,7 +94,7 @@ fun ExerciseOptionsMenu(
             text = { Text("Calendar") },
             onClick = {
                 showMenu = false
-                onNavigateToCalendar()
+                onNavigateToExerciseCalendar()
             },
             leadingIcon = {
                 Icon(
@@ -176,6 +176,7 @@ fun GroupOptionsMenu(
     groupName: String,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
+    onNavigateToGroupCalendar: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -215,6 +216,21 @@ fun GroupOptionsMenu(
                 )
             }
         )
+        // Calendar navigation
+        DropdownMenuItem(
+            text = { Text("Calendar") },
+            onClick = {
+                showMenu = false
+                onNavigateToGroupCalendar()
+            },
+            leadingIcon = {
+                Icon(
+                    painter = painterResource(id = R.drawable.ic_symbol_calendar_today),
+                    contentDescription = null
+                )
+            }
+        )
+
         DropdownMenuItem(
             text = { Text("Edit") },
             onClick = {
@@ -276,7 +292,7 @@ fun GroupOptionsMenu(
  * Used in: PerformanceEntryScreen
  *
  * @param onNavigateToGraph Navigate to the progress graph view
- * @param onNavigateToCalendar Navigate to the calendar view
+ * @param onNavigateToExerciseCalendar Navigate to the calendar view for this exercise
  * @param onEditExercise Navigate to edit the current exercise
  * @param onDeletePerformance Delete the current performance entry
  * @param showDeleteOption Whether to show the delete option (false for new entries)
@@ -284,7 +300,7 @@ fun GroupOptionsMenu(
 @Composable
 fun PerformanceOptionsMenu(
     onNavigateToGraph: () -> Unit,
-    onNavigateToCalendar: () -> Unit,
+    onNavigateToExerciseCalendar: () -> Unit,
     onEditExercise: () -> Unit,
     onDeletePerformance: () -> Unit,
     showDeleteOption: Boolean
@@ -322,7 +338,7 @@ fun PerformanceOptionsMenu(
             text = { Text("Calendar") },
             onClick = {
                 showMenu = false
-                onNavigateToCalendar()
+                onNavigateToExerciseCalendar()
             },
             leadingIcon = {
                 Icon(

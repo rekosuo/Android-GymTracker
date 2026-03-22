@@ -51,6 +51,12 @@ class FakeExerciseDao : ExerciseDao {
         exercises.update { current -> current.filter { it.id != exercise.id } }
     }
 
+    override suspend fun getExerciseNamesByIds(ids: Set<Long>): Map<Long, String> {
+        return exercises.value
+            .filter { it.id in ids }
+            .associate { it.id to it.name }
+    }
+
     override suspend fun updateFavoriteStatus(id: Long, isFavorite: Boolean) {
         exercises.update { current ->
             current.map { if (it.id == id) it.copy(isFavorite = isFavorite) else it }

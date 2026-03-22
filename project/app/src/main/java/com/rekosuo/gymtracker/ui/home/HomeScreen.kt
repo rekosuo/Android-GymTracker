@@ -24,7 +24,9 @@ fun HomeScreen(
     onExerciseClick: (Long) -> Unit,
     onGroupClick: (Long) -> Unit,
     onNavigateToGraph: (Long) -> Unit,
-    onNavigateToCalendar: (Long) -> Unit,
+    onNavigateToExerciseCalendar: (Long) -> Unit,
+    onNavigateToAllCalendar: () -> Unit,
+    onNavigateToGroupCalendar: (Long) -> Unit,
     onEditExercise: (Long) -> Unit,
     onEditGroup: (Long) -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
@@ -35,6 +37,14 @@ fun HomeScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Gym Progress Tracker") },
+                actions = {
+                    IconButton(onClick = onNavigateToAllCalendar) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_symbol_calendar_today),
+                            contentDescription = "Calendar"
+                        )
+                    }
+                }
             )
         }
     ) { padding ->
@@ -124,7 +134,7 @@ fun HomeScreen(
                                 viewModel.onEvent(HomeEvent.ToggleFavoriteExercise(exercise))
                             },
                             onNavigateToGraph = { onNavigateToGraph(exercise.id) },
-                            onNavigateToCalendar = { onNavigateToCalendar(exercise.id) },
+                            onNavigateToExerciseCalendar = { onNavigateToExerciseCalendar(exercise.id) },
                             onDelete = {
                                 viewModel.onEvent(HomeEvent.DeleteExercise(exercise))
                             }
@@ -154,6 +164,7 @@ fun HomeScreen(
                             onToggleFavorite = {
                                 viewModel.onEvent(HomeEvent.ToggleFavoriteGroup(group))
                             },
+                            onNavigateToGroupCalendar = { onNavigateToGroupCalendar(group.id) },
                             onDelete = {
                                 viewModel.onEvent(HomeEvent.DeleteGroup(group))
                             }

@@ -35,6 +35,10 @@ class ExerciseRepository @Inject constructor(
         return exerciseDao.getExerciseById(id)?.toDomain()
     }
 
+    suspend fun getExerciseNamesByIds(ids: Set<Long>): Map<Long, String> {
+        return exerciseDao.getExerciseNamesByIds(ids)
+    }
+
     suspend fun insertExercise(exercise: Exercise): Long {
         return exerciseDao.insertExercise(exercise.toEntity())
     }

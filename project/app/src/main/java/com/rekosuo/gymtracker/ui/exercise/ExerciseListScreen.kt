@@ -23,7 +23,9 @@ fun ExerciseListScreen(
     onCreateExercise: () -> Unit,
     onEditExercise: (Long) -> Unit,
     onNavigateToGraph: (Long) -> Unit,
-    onNavigateToCalendar: (Long) -> Unit,
+    onNavigateToExerciseCalendar: (Long) -> Unit,
+    onNavigateToAllCalendar: () -> Unit,
+    onNavigateToGroupCalendar: (Long) -> Unit,
     onCreateGroup: () -> Unit,
     onEditGroup: (Long) -> Unit,
     onGroupClick: (Long) -> Unit,
@@ -46,6 +48,12 @@ fun ExerciseListScreen(
                 },
                 // Menu button to open New Exercise and New Group
                 actions = {
+                    IconButton(onClick = onNavigateToAllCalendar) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_symbol_calendar_today),
+                            contentDescription = "Calendar"
+                        )
+                    }
                     IconButton(onClick = { showMenu = true }) {
                         Icon(painter = painterResource(id = R.drawable.ic_symbol_more_vert), "Menu")
                     }
@@ -191,6 +199,7 @@ fun ExerciseListScreen(
                                 onToggleFavorite = {
                                     viewModel.onEvent(ExerciseListEvent.ToggleFavoriteGroup(group))
                                 },
+                                onNavigateToGroupCalendar = { onNavigateToGroupCalendar(group.id) },
                                 onDelete = {
                                     viewModel.onEvent(ExerciseListEvent.DeleteGroup(group))
                                 }
@@ -220,7 +229,7 @@ fun ExerciseListScreen(
                                     viewModel.onEvent(ExerciseListEvent.ToggleFavorite(exercise))
                                 },
                                 onNavigateToGraph = { onNavigateToGraph(exercise.id) },
-                                onNavigateToCalendar = { onNavigateToCalendar(exercise.id) },
+                                onNavigateToExerciseCalendar = { onNavigateToExerciseCalendar(exercise.id) },
                                 onDelete = {
                                     viewModel.onEvent(ExerciseListEvent.DeleteExercise(exercise))
                                 }

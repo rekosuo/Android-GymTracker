@@ -35,7 +35,7 @@ class FakePerformanceDao : PerformanceDao {
         return performances.value.find { it.id == id }
     }
 
-    override fun getPerformancesByDateRange(
+    override fun getExercisePerformancesByDateRange(
         exerciseId: Long,
         startDate: Long,
         endDate: Long
@@ -44,6 +44,27 @@ class FakePerformanceDao : PerformanceDao {
             list.filter {
                 it.exerciseId == exerciseId && it.date in startDate..endDate
             }.sortedBy { it.date }
+        }
+    }
+
+    override fun getMultipleExercisePerformancesByDateRange(
+        exerciseIds: List<Long>,
+        startDate: Long,
+        endDate: Long
+    ): Flow<List<PerformanceEntity>> {
+        return performances.map { list ->
+            list.filter {
+                it.exerciseId in exerciseIds && it.date in startDate..endDate
+            }.sortedBy { it.date }
+        }
+    }
+
+    override fun getAllPerformancesByDateRange(
+        startDate: Long,
+        endDate: Long
+    ): Flow<List<PerformanceEntity>> {
+        return performances.map { list ->
+            list.filter { it.date in startDate..endDate }.sortedBy { it.date }
         }
     }
 

@@ -79,8 +79,14 @@ fun NavGraph(
                 onNavigateToGraph = { exerciseId ->
                     navController.navigate(Screen.ProgressGraph.createRoute(exerciseId))
                 },
-                onNavigateToCalendar = { exerciseId ->
+                onNavigateToExerciseCalendar = { exerciseId ->
+                    navController.navigate(Screen.Calendar.createRoute(exerciseId = exerciseId))
+                },
+                onNavigateToAllCalendar = {
                     navController.navigate(Screen.Calendar.createRoute())
+                },
+                onNavigateToGroupCalendar = { groupId ->
+                    navController.navigate(Screen.Calendar.createRoute(groupId = groupId))
                 },
                 onEditExercise = { exerciseId ->
                     navController.navigate(Screen.ExerciseEdit.createRoute(exerciseId))
@@ -107,8 +113,14 @@ fun NavGraph(
                 onNavigateToGraph = { exerciseId ->
                     navController.navigate(Screen.ProgressGraph.createRoute(exerciseId))
                 },
-                onNavigateToCalendar = { exerciseId ->
-                    navController.navigate(Screen.Calendar.createRoute(exerciseId))
+                onNavigateToExerciseCalendar = { exerciseId ->
+                    navController.navigate(Screen.Calendar.createRoute(exerciseId = exerciseId))
+                },
+                onNavigateToAllCalendar = {
+                    navController.navigate(Screen.Calendar.createRoute())
+                },
+                onNavigateToGroupCalendar = { groupId ->
+                    navController.navigate(Screen.Calendar.createRoute(groupId = groupId))
                 },
                 onCreateGroup = {
                     navController.navigate(Screen.GroupEdit.createRoute())
@@ -160,7 +172,8 @@ fun NavGraph(
             arguments = listOf(
                 navArgument("groupId") { type = NavType.LongType }
             )
-        ) {
+        ) { backStackEntry ->
+            val groupId = backStackEntry.arguments?.getLong("groupId") ?: 0L
             GroupContentsScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onExerciseClick = { exerciseId ->
@@ -172,8 +185,11 @@ fun NavGraph(
                 onNavigateToGraph = { exerciseId ->
                     navController.navigate(Screen.ProgressGraph.createRoute(exerciseId))
                 },
-                onNavigateToCalendar = { exerciseId ->
-                    navController.navigate(Screen.Calendar.createRoute(exerciseId))
+                onNavigateToExerciseCalendar = { exerciseId ->
+                    navController.navigate(Screen.Calendar.createRoute(exerciseId = exerciseId))
+                },
+                onNavigateToGroupCalendar = {
+                    navController.navigate(Screen.Calendar.createRoute(groupId = groupId))
                 }
             )
         }
@@ -196,7 +212,7 @@ fun NavGraph(
                 onNavigateToGraph = {
                     navController.navigate(Screen.ProgressGraph.createRoute(exerciseId))
                 },
-                onNavigateToCalendar = {
+                onNavigateToExerciseCalendar = {
                     navController.navigate(Screen.Calendar.createRoute(exerciseId))
                 },
                 onEditExercise = {
