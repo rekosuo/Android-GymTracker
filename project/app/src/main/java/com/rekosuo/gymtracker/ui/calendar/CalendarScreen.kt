@@ -123,11 +123,11 @@ fun CalendarGrid(
             }
         )
 
-        val range = 1..lastDayOfMonth
+        val days = 1..lastDayOfMonth
 
-        for (num in range) {
+        for (day in days) {
             item {
-                DayCell(day = num)
+                DayCell(day = day)
             }
         }
 
