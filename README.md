@@ -15,13 +15,12 @@ You can:
 * Favorite exercises and groups to quickly access them from the home screen
 * Enter exercise performances, with different amounts of weight and repetitions
 * Track exercise progress over time with the Graph view
+* Use the calendar screen to check when exercises were performed.
+    * Check all, group, or individual exercises.
 
 ### Planned features
 
-1. Implement the Calendar view.
-* View days for the selected exercise.
-* View all exercises performed on a day.
-
+1. Menu items to view latest exercise performances.
 2. Include rep tracking in the Graph view.
 
 ### Build
