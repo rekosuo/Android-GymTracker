@@ -88,7 +88,7 @@ class CalendarViewModel @Inject constructor(
 
     private suspend fun loadPerformances() {
 
-        val month = LocalDate.from(_state.value.currentMonth)
+        val month = _state.value.currentMonth.atEndOfMonth()
 
         val startOfMonth = month.withDayOfMonth(1)
             .atStartOfDay(ZoneId.systemDefault())
@@ -100,6 +100,7 @@ class CalendarViewModel @Inject constructor(
             .toInstant().toEpochMilli()
 
         _state.update { it.copy(isLoading = true) }
+
         try {
             val zoneId = ZoneId.systemDefault()
             val performances =
@@ -123,7 +124,7 @@ class CalendarViewModel @Inject constructor(
             _state.update {
                 it.copy(
                     isLoading = false,
-                    error = "Failed ot load performances: ${e.message}"
+                    error = "Failed to load performances: ${e.message}"
                 )
             }
         }

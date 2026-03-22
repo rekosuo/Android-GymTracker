@@ -8,6 +8,7 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.rekosuo.gymtracker.ui.calendar.CalendarScreen
 import com.rekosuo.gymtracker.ui.exercise.ExerciseEditScreen
 import com.rekosuo.gymtracker.ui.exercise.ExerciseListScreen
 import com.rekosuo.gymtracker.ui.graph.ProgressGraphScreen
@@ -79,7 +80,7 @@ fun NavGraph(
                     navController.navigate(Screen.ProgressGraph.createRoute(exerciseId))
                 },
                 onNavigateToCalendar = { exerciseId ->
-                    navController.navigate(Screen.Calendar.createRoute(exerciseId))
+                    navController.navigate(Screen.Calendar.createRoute())
                 },
                 onEditExercise = { exerciseId ->
                     navController.navigate(Screen.ExerciseEdit.createRoute(exerciseId))
@@ -233,8 +234,9 @@ fun NavGraph(
                 }
             )
         ) {
-            // CalendarScreen will be implemented in Phase 5
-            PlaceholderScreen(screenName = "Calendar Screen")
+            CalendarScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

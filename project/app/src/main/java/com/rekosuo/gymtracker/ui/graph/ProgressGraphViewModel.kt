@@ -59,11 +59,6 @@ sealed class ProgressGraphEvent {
 
 /**
  * ViewModel for ProgressGraphScreen.
- *
- * Follows Android Architecture Components guidelines:
- * - Uses SavedStateHandle for navigation arguments (survives process death)
- * - Exposes immutable StateFlow to UI (unidirectional data flow)
- * - Transforms data in ViewModel, keeping UI logic-free
  */
 @HiltViewModel
 class ProgressGraphViewModel @Inject constructor(
