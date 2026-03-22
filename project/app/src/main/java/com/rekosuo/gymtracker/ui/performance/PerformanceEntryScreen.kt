@@ -52,9 +52,11 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -363,10 +365,13 @@ fun WeightInput(
                 horizontalArrangement = Arrangement.Center
             ) {
                 BasicTextField(
-                    value = textValue,
+                    value = TextFieldValue(
+                        text = textValue,
+                        selection = TextRange(textValue.length) // Move selection to end to allow editing
+                    ),
                     onValueChange = { newValue ->
                         // Only allow valid decimal numbers
-                        val filtered = newValue.filter { it.isDigit() || it == '.' }
+                        val filtered = newValue.text.filter { it.isDigit() || it == '.' }
                         if (filtered.count { it == '.' } <= 1) {
                             textValue = filtered
                             val parsedValue = filtered.toFloatOrNull()
@@ -458,9 +463,13 @@ fun RepInput(
             )
         ) {
             BasicTextField(
-                value = textValue,
+                value = TextFieldValue(
+                    text = textValue,
+                    selection = TextRange(textValue.length) // Move selection to end to allow editing
+                ),
                 onValueChange = { newValue ->
-                    val filtered = newValue.filter { it.isDigit() }
+                    // Only allow digits
+                    val filtered = newValue.text.filter { it.isDigit() }
                     textValue = filtered
                     val parsedValue = filtered.toIntOrNull()
                     if (parsedValue != null) {
