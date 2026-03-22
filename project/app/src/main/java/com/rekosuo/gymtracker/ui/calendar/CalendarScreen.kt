@@ -100,6 +100,11 @@ fun YearMonthHeader(
 
 }
 
+/**
+ * Main calendar grid.
+ * Dynamically generates DayCells at the right positions.
+ * A row represents a week. Weeks start at Monday.
+ */
 @Composable
 fun CalendarGrid(
     modifier: Modifier = Modifier,
@@ -112,6 +117,7 @@ fun CalendarGrid(
     LazyVerticalGrid(
         columns = GridCells.Fixed(7)
     ) {
+        // Make sure that the first day of the month lands on the right weekday.
         items(
             count = firstDayOfWeek - 1,
             itemContent = {
@@ -123,18 +129,18 @@ fun CalendarGrid(
             }
         )
 
+        // Generate all days for the month.
         val days = 1..lastDayOfMonth
-
         for (day in days) {
             item {
                 DayCell(day = day)
             }
         }
 
-        val remaining = 42 - (firstDayOfWeek - 1 + lastDayOfMonth)
-
+        // Fill the end of the grid with empty days to keep grid height consistent.
+        val remainingEmptyDays = 42 - (firstDayOfWeek - 1 + lastDayOfMonth)
         items(
-            count = remaining,
+            count = remainingEmptyDays,
             itemContent = {
                 Spacer(
                     modifier = modifier
@@ -146,6 +152,9 @@ fun CalendarGrid(
     }
 }
 
+/**
+ * Individual day in the calendar grid.
+ */
 @Composable
 fun DayCell(
     modifier: Modifier = Modifier,
