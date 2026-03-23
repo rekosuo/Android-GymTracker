@@ -3,6 +3,7 @@ package com.rekosuo.gymtracker.di
 import android.content.Context
 import androidx.room.Room
 import com.rekosuo.gymtracker.data.local.GymDatabase
+import com.rekosuo.gymtracker.data.local.MIGRATION_2_3
 import com.rekosuo.gymtracker.data.local.dao.ExerciseDao
 import com.rekosuo.gymtracker.data.local.dao.GroupDao
 import com.rekosuo.gymtracker.data.local.dao.PerformanceDao
@@ -30,7 +31,7 @@ object AppModule {
             context,
             GymDatabase::class.java,
             "gym_database"
-        ).build()
+        ).addMigrations(MIGRATION_2_3).build()
     }
     
     @Provides

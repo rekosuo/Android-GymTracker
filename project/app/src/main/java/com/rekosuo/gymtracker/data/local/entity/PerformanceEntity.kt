@@ -1,13 +1,26 @@
 package com.rekosuo.gymtracker.data.local.entity
 
 import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.TypeConverter
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 // Table for storing exercise performances
-@Entity(tableName = "performances")
+@Entity(
+    tableName = "performances",
+    foreignKeys = [
+        ForeignKey(
+            entity = ExerciseEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["exerciseId"],
+            onDelete = ForeignKey.CASCADE
+        )
+    ],
+    indices = [Index("exerciseId")]
+)
 data class PerformanceEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,

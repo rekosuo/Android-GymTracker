@@ -22,7 +22,7 @@ import com.rekosuo.gymtracker.data.local.entity.PerformanceEntity
         ExerciseGroupCrossRef::class,
         PerformanceEntity::class
     ],
-    version = 2,    // Increment for schema changes
+    version = 3,    // Increment for schema changes
     exportSchema = true,
     autoMigrations = [
         AutoMigration(from = 1, to = 2)
