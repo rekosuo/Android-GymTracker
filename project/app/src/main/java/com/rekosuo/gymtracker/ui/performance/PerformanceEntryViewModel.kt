@@ -48,24 +48,24 @@ data class PerformanceEntryState(
  * The event system separates UI actions from business logic
  */
 sealed class PerformanceEntryEvent {
-    // Add a new row with specified weight (starts with no reps)
+    // Add a new row with specified weight (starts with one empty set)
     object AddWeightRow : PerformanceEntryEvent()
 
     // Add a rep to an existing weight row
-    data class AddRepToRow(val rowIndex: Int) : PerformanceEntryEvent()
+    data class AddSetToRow(val rowIndex: Int) : PerformanceEntryEvent()
 
     // Update the weight value for a row
     data class UpdateWeight(val rowIndex: Int, val weight: Float) : PerformanceEntryEvent()
 
     // Update a specific rep value within a row
-    data class UpdateRep(val rowIndex: Int, val repIndex: Int, val reps: Int) :
+    data class UpdateSet(val rowIndex: Int, val setIndex: Int, val reps: Int) :
         PerformanceEntryEvent()
 
     // Delete an entire weight row
     data class DeleteRow(val rowIndex: Int) : PerformanceEntryEvent()
 
     // Delete a specific rep from a row
-    data class DeleteRep(val rowIndex: Int, val repIndex: Int) : PerformanceEntryEvent()
+    data class DeleteSet(val rowIndex: Int, val setIndex: Int) : PerformanceEntryEvent()
 
     // Update notes
     data class UpdateNotes(val notes: String) : PerformanceEntryEvent()
@@ -152,7 +152,7 @@ class PerformanceEntryViewModel @Inject constructor(
                     }
                 } else {
                     // New performance - start with one empty weight row with one rep
-                    val initialRow = WeightRow(weight = 0f, reps = listOf(0), startOrder = 0)
+                    val initialRow = WeightRow(weight = 0f, sets = listOf(0), startOrder = 0)
                     _state.update {
                         it.copy(
                             weightRows = listOf(initialRow),
@@ -171,16 +171,16 @@ class PerformanceEntryViewModel @Inject constructor(
     fun onEvent(event: PerformanceEntryEvent) {
         when (event) {
             is PerformanceEntryEvent.AddWeightRow -> addWeightRow()
-            is PerformanceEntryEvent.AddRepToRow -> addRepToRow(event.rowIndex)
+            is PerformanceEntryEvent.AddSetToRow -> addSetToRow(event.rowIndex)
             is PerformanceEntryEvent.UpdateWeight -> updateWeight(event.rowIndex, event.weight)
-            is PerformanceEntryEvent.UpdateRep -> updateRep(
+            is PerformanceEntryEvent.UpdateSet -> updateSet(
                 event.rowIndex,
-                event.repIndex,
+                event.setIndex,
                 event.reps
             )
 
             is PerformanceEntryEvent.DeleteRow -> deleteRow(event.rowIndex)
-            is PerformanceEntryEvent.DeleteRep -> deleteRep(event.rowIndex, event.repIndex)
+            is PerformanceEntryEvent.DeleteSet -> deleteSet(event.rowIndex, event.setIndex)
             is PerformanceEntryEvent.UpdateNotes -> updateNotes(event.notes)
             is PerformanceEntryEvent.SavePerformance -> savePerformance()
             is PerformanceEntryEvent.DeletePerformance -> deletePerformance()
@@ -196,7 +196,7 @@ class PerformanceEntryViewModel @Inject constructor(
             val lastWeight = currentState.weightRows.lastOrNull()?.weight ?: 0f
             val newRow = WeightRow(
                 weight = lastWeight,
-                reps = listOf(0),
+                sets = listOf(0),
                 startOrder = currentState.weightRows.nextStartOrder()
             )
             val newRows = currentState.weightRows + newRow
@@ -208,14 +208,14 @@ class PerformanceEntryViewModel @Inject constructor(
     }
 
     /**
-     * Adds a new rep entry to a specific row.
+     * Adds a new set entry to a specific row.
      * Default rep value is 0, user will edit it.
      */
-    private fun addRepToRow(rowIndex: Int) {
+    private fun addSetToRow(rowIndex: Int) {
         _state.update { currentState ->
             val newRows = currentState.weightRows.mapIndexed { index, row ->
                 if (index == rowIndex) {
-                    row.copy(reps = row.reps + 0)  // Add a new rep with 0 value
+                    row.copy(sets = row.sets + 0)  // Add a new set with 0 reps
                 } else {
                     row
                 }
@@ -250,17 +250,17 @@ class PerformanceEntryViewModel @Inject constructor(
     }
 
     /**
-     * Updates a specific rep value within a row.
+     * Updates a specific set value within a row.
      */
-    private fun updateRep(rowIndex: Int, repIndex: Int, reps: Int) {
+    private fun updateSet(rowIndex: Int, setIndex: Int, reps: Int) {
         _state.update { currentState ->
             val newRows = currentState.weightRows.mapIndexed { index, row ->
                 if (index == rowIndex) {
-                    val newReps = row.reps.toMutableList()
-                    if (repIndex < newReps.size) {
-                        newReps[repIndex] = reps
+                    val newSets = row.sets.toMutableList()
+                    if (setIndex < newSets.size) {
+                        newSets[setIndex] = reps
                     }
-                    row.copy(reps = newReps)
+                    row.copy(sets = newSets)
                 } else {
                     row
                 }
@@ -286,15 +286,15 @@ class PerformanceEntryViewModel @Inject constructor(
     }
 
     /**
-     * Deletes a specific rep from a row.
-     * If this leaves the row with no reps, the row itself is kept (user can add reps or delete row).
+     * Deletes a specific set from a row.
+     * If this leaves the row with no sets, the row itself is kept (user can add sets or delete row).
      */
-    private fun deleteRep(rowIndex: Int, repIndex: Int) {
+    private fun deleteSet(rowIndex: Int, setIndex: Int) {
         _state.update { currentState ->
             val newRows = currentState.weightRows.mapIndexed { index, row ->
                 if (index == rowIndex) {
-                    val newReps = row.reps.filterIndexed { i, _ -> i != repIndex }
-                    row.copy(reps = newReps)
+                    val newSets = row.sets.filterIndexed { i, _ -> i != setIndex }
+                    row.copy(sets = newSets)
                 } else {
                     row
                 }
@@ -312,13 +312,13 @@ class PerformanceEntryViewModel @Inject constructor(
 
     /**
      * Saves the performance to the database.
-     * Only saves if there are actual sets with reps.
+     * Only saves if there are actual sets with sets.
      */
     private fun savePerformance() {
         viewModelScope.launch {
             val currentState = _state.value
 
-            // Filter out rows with no reps and rebuild sets
+            // Filter out rows with no sets and rebuild sets
             val validSets = currentState.sets.filter { it.reps > 0 }
 
             if (validSets.isEmpty()) {

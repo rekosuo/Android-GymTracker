@@ -29,14 +29,14 @@ import com.rekosuo.gymtracker.data.local.entity.SetEntry as EntitySetEntry
  * This is the most complex ViewModel in the app. It manages:
  * - A matrix grid of weight rows and rep columns
  * - Two synchronized representations: flat sets (for storage) and weight rows (for UI)
- * - Adding/removing rows and reps
- * - Saving with validation (filter out empty reps, renumber orders)
+ * - Adding/removing rows and sets
+ * - Saving with validation (filter out empty sets, renumber orders)
  *
  * WHAT WE'RE TESTING:
  * - New performance starts with one empty weight row
- * - Adding rows, adding reps, updating values
- * - Deleting rows and individual reps
- * - Save validation: empty reps are filtered out, orders are renumbered
+ * - Adding rows, adding sets, updating values
+ * - Deleting rows and individual sets
+ * - Save validation: empty sets are filtered out, orders are renumbered
  * - Editing existing performance loads data correctly
  * - Delete performance marks as saved (navigates back)
  */
@@ -100,11 +100,11 @@ class PerformanceEntryViewModelTest {
         assertEquals("Bench Press", state.exerciseName)
         assertEquals(1, state.weightRows.size)
         assertEquals(0f, state.weightRows[0].weight)
-        assertEquals(listOf(0), state.weightRows[0].reps)
+        assertEquals(listOf(0), state.weightRows[0].sets)
         assertFalse(state.isLoading)
     }
 
-    // -- Adding rows and reps --
+    // -- Adding rows and sets --
 
     @Test
     fun `AddWeightRow adds a row with the same weight as the last row`() = runTest {
@@ -119,31 +119,31 @@ class PerformanceEntryViewModelTest {
         val rows = viewModel.state.value.weightRows
         assertEquals(2, rows.size)
         assertEquals(20f, rows[1].weight) // inherited from last row
-        assertEquals(listOf(0), rows[1].reps) // starts with one rep
+        assertEquals(listOf(0), rows[1].sets) // starts with one rep
     }
 
     @Test
-    fun `AddRepToRow adds a rep with value 0`() = runTest {
+    fun `AddSetToRow adds a set with 0 reps`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(rowIndex = 0))
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(rowIndex = 0))
 
-        val reps = viewModel.state.value.weightRows[0].reps
-        assertEquals(2, reps.size) // initial rep + added rep
-        assertEquals(0, reps[1]) // default value for user to edit
+        val sets = viewModel.state.value.weightRows[0].sets
+        assertEquals(2, sets.size) // initial set + added set
+        assertEquals(0, sets[1]) // default rep value for user to edit
     }
 
     @Test
-    fun `adding multiple reps builds up the row`() = runTest {
+    fun `adding multiple sets builds up the row`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(rowIndex = 0))
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(rowIndex = 0))
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(rowIndex = 0))
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(rowIndex = 0))
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(rowIndex = 0))
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(rowIndex = 0))
 
-        assertEquals(4, viewModel.state.value.weightRows[0].reps.size) // initial rep + 3 added
+        assertEquals(4, viewModel.state.value.weightRows[0].sets.size) // initial set + 3 added
     }
 
     // -- Updating values --
@@ -159,15 +159,15 @@ class PerformanceEntryViewModelTest {
     }
 
     @Test
-    fun `UpdateRep changes a specific rep value`() = runTest {
+    fun `UpdateSet changes a specific rep value`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Add a rep and then update it
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(rowIndex = 0))
-        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(rowIndex = 0, repIndex = 0, reps = 12))
+        // Add a set and then update its rep count
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(rowIndex = 0))
+        viewModel.onEvent(PerformanceEntryEvent.UpdateSet(rowIndex = 0, setIndex = 0, reps = 12))
 
-        assertEquals(12, viewModel.state.value.weightRows[0].reps[0])
+        assertEquals(12, viewModel.state.value.weightRows[0].sets[0])
     }
 
     @Test
@@ -179,9 +179,9 @@ class PerformanceEntryViewModelTest {
 
         // Build a workout: 20kg x 10, 20kg x 8
         viewModel.onEvent(PerformanceEntryEvent.UpdateWeight(0, 20f))
-        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 0, 10)) // use initial rep
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
-        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 1, 8))
+        viewModel.onEvent(PerformanceEntryEvent.UpdateSet(0, 0, 10)) // use initial set
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(0))
+        viewModel.onEvent(PerformanceEntryEvent.UpdateSet(0, 1, 8))
 
         val state = viewModel.state.value
         assertEquals(2, state.sets.size)
@@ -200,10 +200,10 @@ class PerformanceEntryViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Create two rows (each starts with one initial rep)
-        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 0, 10))
+        // Create two rows (each starts with one initial set)
+        viewModel.onEvent(PerformanceEntryEvent.UpdateSet(0, 0, 10))
         viewModel.onEvent(PerformanceEntryEvent.AddWeightRow)
-        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(1, 0, 8))
+        viewModel.onEvent(PerformanceEntryEvent.UpdateSet(1, 0, 8))
 
         // Delete the first row
         viewModel.onEvent(PerformanceEntryEvent.DeleteRow(rowIndex = 0))
@@ -215,21 +215,21 @@ class PerformanceEntryViewModelTest {
     }
 
     @Test
-    fun `DeleteRep removes one rep from a row`() = runTest {
+    fun `DeleteSet removes one set from a row`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Set up two reps (use initial rep + add one more)
-        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 0, 10))
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
-        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 1, 8))
+        // Set up two sets (use initial set + add one more)
+        viewModel.onEvent(PerformanceEntryEvent.UpdateSet(0, 0, 10))
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(0))
+        viewModel.onEvent(PerformanceEntryEvent.UpdateSet(0, 1, 8))
 
-        // Delete the first rep
-        viewModel.onEvent(PerformanceEntryEvent.DeleteRep(rowIndex = 0, repIndex = 0))
+        // Delete the first set
+        viewModel.onEvent(PerformanceEntryEvent.DeleteSet(rowIndex = 0, setIndex = 0))
 
-        val reps = viewModel.state.value.weightRows[0].reps
-        assertEquals(1, reps.size)
-        assertEquals(8, reps[0]) // the second rep remains
+        val sets = viewModel.state.value.weightRows[0].sets
+        assertEquals(1, sets.size)
+        assertEquals(8, sets[0]) // the second set remains
     }
 
     // -- Notes --
@@ -248,16 +248,16 @@ class PerformanceEntryViewModelTest {
 
     @Test
     fun `SavePerformance filters out zero-rep sets`() = runTest {
-        // The ViewModel should only save sets where reps > 0.
+        // The ViewModel should only save sets where sets > 0.
         // This prevents saving placeholder/empty sets.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
         // Row with one real rep (10) and one empty rep (0)
         viewModel.onEvent(PerformanceEntryEvent.UpdateWeight(0, 20f))
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
-        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 0, 10))
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(0))
+        viewModel.onEvent(PerformanceEntryEvent.UpdateSet(0, 0, 10))
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(0))
         // Don't update second rep — it stays at 0
 
         viewModel.onEvent(PerformanceEntryEvent.SavePerformance)
@@ -273,11 +273,11 @@ class PerformanceEntryViewModelTest {
 
     @Test
     fun `SavePerformance with only zero reps shows error`() = runTest {
-        // If ALL reps are 0, there's nothing to save.
+        // If ALL sets are 0, there's nothing to save.
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(0))
         // Rep stays at 0
 
         viewModel.onEvent(PerformanceEntryEvent.SavePerformance)
@@ -296,13 +296,13 @@ class PerformanceEntryViewModelTest {
 
         // Create setup where filtering will leave gaps
         viewModel.onEvent(PerformanceEntryEvent.UpdateWeight(0, 20f))
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
-        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 0, 10))
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(0))
+        viewModel.onEvent(PerformanceEntryEvent.UpdateSet(0, 0, 10))
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(0))
         // Leave second rep at 0 (will be filtered)
         viewModel.onEvent(PerformanceEntryEvent.AddWeightRow)
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(1))
-        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(1, 0, 8))
+        viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(1))
+        viewModel.onEvent(PerformanceEntryEvent.UpdateSet(1, 0, 8))
 
         viewModel.onEvent(PerformanceEntryEvent.SavePerformance)
         advanceUntilIdle()
@@ -340,9 +340,9 @@ class PerformanceEntryViewModelTest {
         // Sets should be grouped into 2 weight rows: [20kg x 10, 10] and [25kg x 8]
         assertEquals(2, state.weightRows.size)
         assertEquals(20f, state.weightRows[0].weight)
-        assertEquals(listOf(10, 10), state.weightRows[0].reps)
+        assertEquals(listOf(10, 10), state.weightRows[0].sets)
         assertEquals(25f, state.weightRows[1].weight)
-        assertEquals(listOf(8), state.weightRows[1].reps)
+        assertEquals(listOf(8), state.weightRows[1].sets)
     }
 
     // -- Deleting performance --

@@ -174,7 +174,7 @@ fun PerformanceEntryScreen(
                     }
                 }
 
-                // Track row count for auto-focus on new row creation
+                // Track row count for autofocus on new row creation
                 var prevRowCount by remember { mutableIntStateOf(state.weightRows.size) }
                 val weightFocusRequesters = remember(state.weightRows.size) {
                     List(state.weightRows.size) { FocusRequester() }
@@ -211,17 +211,17 @@ fun PerformanceEntryScreen(
                                     PerformanceEntryEvent.UpdateWeight(rowIndex, weight)
                                 )
                             },
-                            onRepChange = { repIndex, reps ->
+                            onSetChange = { setIndex, reps ->
                                 viewModel.onEvent(
-                                    PerformanceEntryEvent.UpdateRep(rowIndex, repIndex, reps)
+                                    PerformanceEntryEvent.UpdateSet(rowIndex, setIndex, reps)
                                 )
                             },
-                            onAddRep = {
-                                viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(rowIndex))
+                            onAddSet = {
+                                viewModel.onEvent(PerformanceEntryEvent.AddSetToRow(rowIndex))
                             },
-                            onDeleteRep = { repIndex ->
+                            onDeleteSet = { setIndex ->
                                 viewModel.onEvent(
-                                    PerformanceEntryEvent.DeleteRep(rowIndex, repIndex)
+                                    PerformanceEntryEvent.DeleteSet(rowIndex, setIndex)
                                 )
                             },
                             onDeleteRow = {
@@ -281,8 +281,8 @@ fun PerformanceEntryScreen(
  *
  * Displays:
  * - Editable weight input on the left
- * - Horizontally scrollable list of rep inputs
- * - Add button to add more reps
+ * - Horizontally scrollable list of set inputs
+ * - Add button to add more sets
  * - Delete row button (shown on long press or via menu)
  */
 @OptIn(ExperimentalFoundationApi::class)
@@ -291,28 +291,28 @@ fun WeightRowItem(
     row: WeightRow,
     weightFocusRequester: FocusRequester,
     onWeightChange: (Float) -> Unit,
-    onRepChange: (repIndex: Int, reps: Int) -> Unit,
-    onAddRep: () -> Unit,
-    onDeleteRep: (repIndex: Int) -> Unit,
+    onSetChange: (setIndex: Int, reps: Int) -> Unit,
+    onAddSet: () -> Unit,
+    onDeleteSet: (setIndex: Int) -> Unit,
     onDeleteRow: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showRowMenu by remember { mutableStateOf(false) }
 
-    // Track rep count for auto-focus on new rep creation
-    var prevRepCount by remember { mutableIntStateOf(row.reps.size) }
-    val repFocusRequesters = remember(row.reps.size) {
-        List(row.reps.size) { FocusRequester() }
+    // Track set count for autofocus on new set creation
+    var prevSetCount by remember { mutableIntStateOf(row.sets.size) }
+    val setFocusRequesters = remember(row.sets.size) {
+        List(row.sets.size) { FocusRequester() }
     }
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    LaunchedEffect(row.reps.size) {
-        if (row.reps.size > prevRepCount) {
+    LaunchedEffect(row.sets.size) {
+        if (row.sets.size > prevSetCount) {
             delay(100)
-            repFocusRequesters.last().requestFocus()
+            setFocusRequesters.last().requestFocus()
             keyboardController?.show()
         }
-        prevRepCount = row.reps.size
+        prevSetCount = row.sets.size
     }
 
     Row(
@@ -351,19 +351,19 @@ fun WeightRowItem(
             }
         }
 
-        // Rep inputs
-        row.reps.forEachIndexed { repIndex, reps ->
-            RepInput(
+        // Set inputs
+        row.sets.forEachIndexed { setIndex, reps ->
+            SetInput(
                 reps = reps,
-                onRepsChange = { newReps -> onRepChange(repIndex, newReps) },
-                onDelete = { onDeleteRep(repIndex) },
-                focusRequester = repFocusRequesters[repIndex]
+                onRepsChange = { newReps -> onSetChange(setIndex, newReps) },
+                onDelete = { onDeleteSet(setIndex) },
+                focusRequester = setFocusRequesters[setIndex]
             )
         }
 
-        // Add rep button
+        // Add set button
         AddButton(
-            onClick = onAddRep,
+            onClick = onAddSet,
             size = 44.dp
         )
     }
@@ -479,11 +479,11 @@ fun WeightInput(
 }
 
 /**
- * Editable rep input field.
+ * Editable set input field displaying the rep count for that set.
  */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun RepInput(
+fun SetInput(
     reps: Int,
     onRepsChange: (Int) -> Unit,
     onDelete: () -> Unit,

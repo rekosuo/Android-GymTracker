@@ -63,13 +63,13 @@ data class Performance(
  * SetEntries: [20kg x 10 (order=0), 20kg x 10 (order=1), 22kg x 7 (order=2), 20kg x 8 (order=3)]
  *
  * Becomes WeightRows:
- * - WeightRow(weight=20, reps=[10, 10], startOrder=0)
- * - WeightRow(weight=22, reps=[7], startOrder=2)
- * - WeightRow(weight=20, reps=[8], startOrder=3)
+ * - WeightRow(weight=20, sets=[10, 10], startOrder=0)
+ * - WeightRow(weight=22, sets=[7], startOrder=2)
+ * - WeightRow(weight=20, sets=[8], startOrder=3)
  */
 data class WeightRow(
     val weight: Float,
-    val reps: List<Int>,      // List of reps for consecutive sets at this weight
+    val sets: List<Int>,      // List of sets for consecutive sets at this weight
     val startOrder: Int       // Order of the first set in this row (for editing/deleting)
 )
 
@@ -143,7 +143,7 @@ fun List<WeightRow>.toSets(): List<SetEntry> {
     val sets = mutableListOf<SetEntry>()
     var order = 0
     for (row in this) {
-        for (reps in row.reps) {
+        for (reps in row.sets) {
             sets.add(SetEntry(weight = row.weight, reps = reps, order = order))
             order++
         }
@@ -157,7 +157,7 @@ fun List<WeightRow>.toSets(): List<SetEntry> {
 fun List<WeightRow>.nextStartOrder(): Int {
     if (isEmpty()) return 0
     val lastRow = last()
-    return lastRow.startOrder + lastRow.reps.size
+    return lastRow.startOrder + lastRow.sets.size
 }
 
 // ── Performance → GraphDataPoint ──

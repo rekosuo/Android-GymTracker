@@ -203,9 +203,11 @@ class CalendarViewModelTest {
     fun `GROUP mode - title is group name`() = runTest {
         val ex1 = exerciseDao.insertExercise(ExerciseEntity(name = "Squat"))
         val groupId = groupDao.insertGroup(ExerciseGroupEntity(name = "Leg Day"))
-        groupDao.replaceGroupExercises(groupId, listOf(
-            ExerciseGroupCrossRef(exerciseId = ex1, groupId = groupId, orderIndex = 0)
-        ))
+        groupDao.replaceGroupExercises(
+            groupId, listOf(
+                ExerciseGroupCrossRef(exerciseId = ex1, groupId = groupId, orderIndex = 0)
+            )
+        )
 
         val vm = createViewModel(groupId = groupId)
         advanceUntilIdle()
@@ -219,9 +221,11 @@ class CalendarViewModelTest {
         val ex1 = exerciseDao.insertExercise(ExerciseEntity(name = "Squat"))
         val ex2 = exerciseDao.insertExercise(ExerciseEntity(name = "Bench Press"))
         val groupId = groupDao.insertGroup(ExerciseGroupEntity(name = "Legs"))
-        groupDao.replaceGroupExercises(groupId, listOf(
-            ExerciseGroupCrossRef(exerciseId = ex1, groupId = groupId, orderIndex = 0)
-        ))
+        groupDao.replaceGroupExercises(
+            groupId, listOf(
+                ExerciseGroupCrossRef(exerciseId = ex1, groupId = groupId, orderIndex = 0)
+            )
+        )
 
         val today = LocalDate.now()
         val yesterday = today.minusDays(1)
@@ -316,7 +320,7 @@ class CalendarViewModelTest {
         assertEquals("Felt strong", summary.notes)
         assertEquals(1, summary.weightRows.size)
         assertEquals(100f, summary.weightRows[0].weight)
-        assertEquals(listOf(5, 5, 3), summary.weightRows[0].reps)
+        assertEquals(listOf(5, 5, 3), summary.weightRows[0].sets)
     }
 
     @Test
@@ -417,10 +421,12 @@ class CalendarViewModelTest {
         val lunge = exerciseDao.insertExercise(ExerciseEntity(name = "Lunge"))
         val bench = exerciseDao.insertExercise(ExerciseEntity(name = "Bench Press"))
         val groupId = groupDao.insertGroup(ExerciseGroupEntity(name = "Leg Day"))
-        groupDao.replaceGroupExercises(groupId, listOf(
-            ExerciseGroupCrossRef(exerciseId = squat, groupId = groupId, orderIndex = 0),
-            ExerciseGroupCrossRef(exerciseId = lunge, groupId = groupId, orderIndex = 1)
-        ))
+        groupDao.replaceGroupExercises(
+            groupId, listOf(
+                ExerciseGroupCrossRef(exerciseId = squat, groupId = groupId, orderIndex = 0),
+                ExerciseGroupCrossRef(exerciseId = lunge, groupId = groupId, orderIndex = 1)
+            )
+        )
 
         val today = LocalDate.now()
         performanceDao.insertPerformance(

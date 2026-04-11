@@ -30,7 +30,7 @@ class DomainModelExtensionsTest {
 
         assertEquals(1, rows.size)
         assertEquals(20f, rows[0].weight)
-        assertEquals(listOf(10), rows[0].reps)
+        assertEquals(listOf(10), rows[0].sets)
         assertEquals(0, rows[0].startOrder)
     }
 
@@ -47,7 +47,7 @@ class DomainModelExtensionsTest {
 
         assertEquals(1, rows.size)
         assertEquals(20f, rows[0].weight)
-        assertEquals(listOf(10, 10, 8), rows[0].reps)
+        assertEquals(listOf(10, 10, 8), rows[0].sets)
         assertEquals(0, rows[0].startOrder)
     }
 
@@ -62,9 +62,9 @@ class DomainModelExtensionsTest {
 
         assertEquals(2, rows.size)
         assertEquals(20f, rows[0].weight)
-        assertEquals(listOf(10), rows[0].reps)
+        assertEquals(listOf(10), rows[0].sets)
         assertEquals(25f, rows[1].weight)
-        assertEquals(listOf(8), rows[1].reps)
+        assertEquals(listOf(8), rows[1].sets)
         assertEquals(1, rows[1].startOrder)
     }
 
@@ -82,17 +82,17 @@ class DomainModelExtensionsTest {
         val rows = sets.toWeightRows()
 
         assertEquals(3, rows.size)
-        // Row 1: 20kg with two reps
+        // Row 1: 20kg with two sets
         assertEquals(20f, rows[0].weight)
-        assertEquals(listOf(10, 10), rows[0].reps)
+        assertEquals(listOf(10, 10), rows[0].sets)
         assertEquals(0, rows[0].startOrder)
         // Row 2: 22kg with one rep
         assertEquals(22f, rows[1].weight)
-        assertEquals(listOf(7), rows[1].reps)
+        assertEquals(listOf(7), rows[1].sets)
         assertEquals(2, rows[1].startOrder)
         // Row 3: back to 20kg — separate row, not merged with row 1
         assertEquals(20f, rows[2].weight)
-        assertEquals(listOf(8), rows[2].reps)
+        assertEquals(listOf(8), rows[2].sets)
         assertEquals(3, rows[2].startOrder)
     }
 
@@ -110,9 +110,9 @@ class DomainModelExtensionsTest {
 
         assertEquals(2, rows.size)
         assertEquals(20f, rows[0].weight)
-        assertEquals(listOf(10, 10), rows[0].reps)
+        assertEquals(listOf(10, 10), rows[0].sets)
         assertEquals(25f, rows[1].weight)
-        assertEquals(listOf(8), rows[1].reps)
+        assertEquals(listOf(8), rows[1].sets)
     }
 
     // ========================================================================
@@ -129,7 +129,7 @@ class DomainModelExtensionsTest {
     @Test
     fun `toSets - single row with multiple reps expands correctly`() {
         // A row like "20kg | 10 | 10 | 8" should become three separate SetEntry objects.
-        val rows = listOf(WeightRow(weight = 20f, reps = listOf(10, 10, 8), startOrder = 0))
+        val rows = listOf(WeightRow(weight = 20f, sets = listOf(10, 10, 8), startOrder = 0))
         val sets = rows.toSets()
 
         assertEquals(3, sets.size)
@@ -146,8 +146,8 @@ class DomainModelExtensionsTest {
         // Order values must be recalculated from 0, regardless of the original
         // startOrder values. This ensures no gaps after row deletions.
         val rows = listOf(
-            WeightRow(weight = 20f, reps = listOf(10, 10), startOrder = 0),
-            WeightRow(weight = 25f, reps = listOf(8), startOrder = 5) // gap in startOrder
+            WeightRow(weight = 20f, sets = listOf(10, 10), startOrder = 0),
+            WeightRow(weight = 25f, sets = listOf(8), startOrder = 5) // gap in startOrder
         )
         val sets = rows.toSets()
 
@@ -160,11 +160,11 @@ class DomainModelExtensionsTest {
 
     @Test
     fun `toSets - row with empty reps produces no sets`() {
-        // A row with no reps (user hasn't entered any yet) should not create
+        // A row with no sets (user hasn't entered any yet) should not create
         // phantom SetEntry objects.
         val rows = listOf(
-            WeightRow(weight = 20f, reps = emptyList(), startOrder = 0),
-            WeightRow(weight = 25f, reps = listOf(8), startOrder = 0)
+            WeightRow(weight = 20f, sets = emptyList(), startOrder = 0),
+            WeightRow(weight = 25f, sets = listOf(8), startOrder = 0)
         )
         val sets = rows.toSets()
 
@@ -180,7 +180,7 @@ class DomainModelExtensionsTest {
     @Test
     fun `round trip - sets to rows and back preserves data`() {
         // This is a critical property: converting sets -> rows -> sets should
-        // give back equivalent data (same weights and reps in the same order).
+        // give back equivalent data (same weights and sets in the same order).
         // The order values will be renumbered but the sequence must be preserved.
         val originalSets = listOf(
             SetEntry(weight = 20f, reps = 10, order = 0),
@@ -211,8 +211,8 @@ class DomainModelExtensionsTest {
 
     @Test
     fun `nextStartOrder - after one row with two reps returns 2`() {
-        // If the last row starts at 0 and has 2 reps, next should be 2.
-        val rows = listOf(WeightRow(weight = 20f, reps = listOf(10, 10), startOrder = 0))
+        // If the last row starts at 0 and has 2 sets, next should be 2.
+        val rows = listOf(WeightRow(weight = 20f, sets = listOf(10, 10), startOrder = 0))
         assertEquals(2, rows.nextStartOrder())
     }
 
@@ -220,10 +220,10 @@ class DomainModelExtensionsTest {
     fun `nextStartOrder - calculates from last row only`() {
         // Only the last row matters, not earlier rows.
         val rows = listOf(
-            WeightRow(weight = 20f, reps = listOf(10, 10), startOrder = 0),
-            WeightRow(weight = 25f, reps = listOf(8, 6, 5), startOrder = 2)
+            WeightRow(weight = 20f, sets = listOf(10, 10), startOrder = 0),
+            WeightRow(weight = 25f, sets = listOf(8, 6, 5), startOrder = 2)
         )
-        assertEquals(5, rows.nextStartOrder()) // 2 + 3 reps = 5
+        assertEquals(5, rows.nextStartOrder()) // 2 + 3 sets = 5
     }
 
     // ========================================================================

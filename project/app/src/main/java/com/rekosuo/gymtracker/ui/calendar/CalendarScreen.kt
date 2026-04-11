@@ -351,7 +351,7 @@ fun PerformanceEntryCard(
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = "x ${weightRow.reps.joinToString(", ")}",
+                        text = "x ${weightRow.sets.joinToString(", ")}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
