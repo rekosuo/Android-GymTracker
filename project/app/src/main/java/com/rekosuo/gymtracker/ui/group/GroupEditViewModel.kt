@@ -33,6 +33,7 @@ sealed class GroupEditEvent {
     data class ExerciseToggled(val exerciseId: Long) : GroupEditEvent()
     data class ExerciseMoved(val exerciseId: Long, val direction: MoveDirection) : GroupEditEvent()
     object SaveGroup : GroupEditEvent()
+    object DeleteGroup : GroupEditEvent()
 }
 
 enum class MoveDirection { UP, DOWN }
@@ -153,6 +154,10 @@ class GroupEditViewModel @Inject constructor(
             GroupEditEvent.SaveGroup -> {
                 saveGroup()
             }
+
+            GroupEditEvent.DeleteGroup -> {
+                deleteGroup()
+            }
         }
     }
 
@@ -196,6 +201,27 @@ class GroupEditViewModel @Inject constructor(
                         isLoading = false,
                         error = "Failed to save group: ${e.message}"
                     )
+                }
+            }
+        }
+    }
+
+    private fun deleteGroup() {
+        val id = groupId ?: return
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            try {
+                val group = ExerciseGroup(
+                    id = id,
+                    name = _state.value.groupName,
+                    isFavorite = _state.value.isFavorite,
+                    createdAt = System.currentTimeMillis()
+                )
+                repository.deleteGroup(group)
+                _state.update { it.copy(isLoading = false, isSaved = true) }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(isLoading = false, error = "Failed to delete group: ${e.message}")
                 }
             }
         }

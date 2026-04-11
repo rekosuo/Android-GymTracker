@@ -24,6 +24,7 @@ sealed class ExerciseEditEvent {
     data class NameChanged(val name: String) : ExerciseEditEvent()
     data class FavoriteToggled(val isFavorite: Boolean) : ExerciseEditEvent()
     object SaveExercise : ExerciseEditEvent()
+    object DeleteExercise : ExerciseEditEvent()
 }
 
 @HiltViewModel
@@ -97,6 +98,10 @@ class ExerciseEditViewModel @Inject constructor(
             ExerciseEditEvent.SaveExercise -> {
                 saveExercise()
             }
+
+            ExerciseEditEvent.DeleteExercise -> {
+                deleteExercise()
+            }
         }
     }
 
@@ -133,6 +138,27 @@ class ExerciseEditViewModel @Inject constructor(
                         isLoading = false,
                         error = "Failed to save exercise: ${e.message}"
                     )
+                }
+            }
+        }
+    }
+
+    private fun deleteExercise() {
+        val id = exerciseId ?: return
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            try {
+                val exercise = Exercise(
+                    id = id,
+                    name = _state.value.exerciseName,
+                    isFavorite = _state.value.isFavorite,
+                    createdAt = System.currentTimeMillis()
+                )
+                repository.deleteExercise(exercise)
+                _state.update { it.copy(isLoading = false, isSaved = true) }
+            } catch (e: Exception) {
+                _state.update {
+                    it.copy(isLoading = false, error = "Failed to delete exercise: ${e.message}")
                 }
             }
         }

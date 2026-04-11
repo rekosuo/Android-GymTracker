@@ -22,7 +22,6 @@ import com.rekosuo.gymtracker.domain.model.ExerciseGroup
  * @param onNavigateToGraph Navigate to progress graph for this exercise
  * @param onNavigateToExerciseCalendar Navigate to calendar view for this exercise
  * @param onEdit Navigate to edit this exercise
- * @param onDelete Delete this exercise
  */
 @Composable
 fun ExerciseListItem(
@@ -32,7 +31,6 @@ fun ExerciseListItem(
     onNavigateToGraph: () -> Unit,
     onNavigateToExerciseCalendar: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -69,13 +67,11 @@ fun ExerciseListItem(
             }
 
             ExerciseOptionsMenu(
-                exerciseName = exercise.name,
                 isFavorite = exercise.isFavorite,
                 onToggleFavorite = onToggleFavorite,
                 onNavigateToGraph = onNavigateToGraph,
                 onNavigateToExerciseCalendar = onNavigateToExerciseCalendar,
                 onEdit = onEdit,
-                onDelete = onDelete
             )
         }
     }
@@ -92,7 +88,6 @@ fun GroupListItem(
     onEdit: () -> Unit,
     onToggleFavorite: () -> Unit,
     onNavigateToGroupCalendar: () -> Unit,
-    onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -141,12 +136,10 @@ fun GroupListItem(
             }
 
             GroupOptionsMenu(
-                groupName = group.name,
                 isFavorite = group.isFavorite,
                 onToggleFavorite = onToggleFavorite,
                 onNavigateToGroupCalendar = onNavigateToGroupCalendar,
                 onEdit = onEdit,
-                onDelete = onDelete
             )
         }
     }

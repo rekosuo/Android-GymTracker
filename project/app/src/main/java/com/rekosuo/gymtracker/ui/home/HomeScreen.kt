@@ -135,9 +135,6 @@ fun HomeScreen(
                             },
                             onNavigateToGraph = { onNavigateToGraph(exercise.id) },
                             onNavigateToExerciseCalendar = { onNavigateToExerciseCalendar(exercise.id) },
-                            onDelete = {
-                                viewModel.onEvent(HomeEvent.DeleteExercise(exercise))
-                            }
                         )
                     }
                 }
@@ -165,9 +162,6 @@ fun HomeScreen(
                                 viewModel.onEvent(HomeEvent.ToggleFavoriteGroup(group))
                             },
                             onNavigateToGroupCalendar = { onNavigateToGroupCalendar(group.id) },
-                            onDelete = {
-                                viewModel.onEvent(HomeEvent.DeleteGroup(group))
-                            }
                         )
                     }
                 }

@@ -154,4 +154,39 @@ class ExerciseDaoTest {
         val result = exerciseDao.getExerciseById(999L)
         assertNull(result)
     }
+
+    @Test
+    fun getExerciseNamesByIds_returnsIdToNameMap() = runTest {
+        // getExerciseNamesByIds returns a Map<Long, String> — used for lightweight
+        // lookups where we only need names, not full entities.
+        val benchId = exerciseDao.insertExercise(
+            ExerciseEntity(name = "Bench Press", createdAt = 1000L)
+        )
+        val squatId = exerciseDao.insertExercise(
+            ExerciseEntity(name = "Squat", createdAt = 1000L)
+        )
+        exerciseDao.insertExercise(
+            ExerciseEntity(name = "Deadlift", createdAt = 1000L)
+        )
+
+        val result = exerciseDao.getExerciseNamesByIds(setOf(benchId, squatId))
+
+        assertEquals(2, result.size)
+        assertEquals("Bench Press", result[benchId])
+        assertEquals("Squat", result[squatId])
+    }
+
+    @Test
+    fun getExerciseNamesByIds_ignoresUnknownIds() = runTest {
+        // IDs not in the database should simply be absent from the result map,
+        // not cause an error.
+        val id = exerciseDao.insertExercise(
+            ExerciseEntity(name = "Bench Press", createdAt = 1000L)
+        )
+
+        val result = exerciseDao.getExerciseNamesByIds(setOf(id, 9999L))
+
+        assertEquals(1, result.size)
+        assertEquals("Bench Press", result[id])
+    }
 }

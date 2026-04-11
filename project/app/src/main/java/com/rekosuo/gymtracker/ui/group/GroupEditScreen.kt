@@ -20,8 +20,9 @@ fun GroupEditScreen(
     viewModel: GroupEditViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // Navigate back when saved
+    // Navigate back when saved or deleted
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) {
             onNavigateBack()
@@ -48,7 +49,7 @@ fun GroupEditScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Error message
+            // Error message — kept outside the scroll area so it's always visible
             state.error?.let { error ->
                 Card(
                     modifier = Modifier
@@ -81,55 +82,6 @@ fun GroupEditScreen(
                 }
             }
 
-            // Group name field
-            OutlinedTextField(
-                value = state.groupName,
-                onValueChange = {
-                    viewModel.onEvent(GroupEditEvent.NameChanged(it))
-                },
-                label = { Text("Group Name") },
-                placeholder = { Text("e.g., Chest Day") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                enabled = !state.isLoading,
-                singleLine = true
-            )
-
-            // Favorite toggle
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text(
-                            text = "Add to Favorites",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = "Show on home screen for quick access",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = state.isFavorite,
-                        onCheckedChange = {
-                            viewModel.onEvent(GroupEditEvent.FavoriteToggled(it))
-                        },
-                        enabled = !state.isLoading
-                    )
-                }
-            }
-
             if (state.isLoading) {
                 Box(
                     modifier = Modifier.fillMaxSize(),
@@ -148,12 +100,53 @@ fun GroupEditScreen(
                     contentPadding = PaddingValues(16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // Group name field
+                    item {
+                        OutlinedTextField(
+                            value = state.groupName,
+                            onValueChange = {
+                                viewModel.onEvent(GroupEditEvent.NameChanged(it))
+                            },
+                            label = { Text("Group Name") },
+                            placeholder = { Text("e.g., Chest Day") },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !state.isLoading,
+                            singleLine = true
+                        )
+                    }
+
+                    // Favorites toggle (compact — no subtitle)
+                    item {
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    text = "Add to Favorites",
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                                Switch(
+                                    checked = state.isFavorite,
+                                    onCheckedChange = {
+                                        viewModel.onEvent(GroupEditEvent.FavoriteToggled(it))
+                                    },
+                                    enabled = !state.isLoading
+                                )
+                            }
+                        }
+                    }
+
                     // Selected exercises section
                     if (state.selectedExercises.isNotEmpty()) {
                         item {
                             Text(
                                 text = "Selected Exercises",
-                                style = MaterialTheme.typography.titleMedium
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.padding(top = 8.dp)
                             )
                         }
                         items(
@@ -181,9 +174,8 @@ fun GroupEditScreen(
                         }
                     }
 
-                    // Available exercises section
+                    // Search bar
                     item {
-                        // Search bar
                         OutlinedTextField(
                             value = state.searchQuery,
                             onValueChange = {
@@ -261,7 +253,8 @@ fun GroupEditScreen(
                 onClick = { viewModel.onEvent(GroupEditEvent.SaveGroup) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(horizontal = 16.dp)
+                    .padding(top = 16.dp),
                 enabled = !state.isLoading
             ) {
                 if (state.isLoading) {
@@ -273,7 +266,56 @@ fun GroupEditScreen(
                 }
                 Text(if (state.isEditing) "Save Changes" else "Create Group")
             }
+
+            // Delete button — only shown when editing an existing group
+            if (state.isEditing) {
+                Button(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 8.dp, bottom = 16.dp),
+                    enabled = !state.isLoading,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_symbol_delete),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Delete Group")
+                }
+            }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Group") },
+            text = { Text("Are you sure you want to delete \"${state.groupName}\"? The exercises in this group will not be deleted.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        viewModel.onEvent(GroupEditEvent.DeleteGroup)
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

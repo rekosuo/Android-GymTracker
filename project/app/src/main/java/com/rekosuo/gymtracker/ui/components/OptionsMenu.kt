@@ -13,31 +13,25 @@ import com.rekosuo.gymtracker.R
  * - Navigate to progress graph
  * - Navigate to calendar view
  * - Edit the exercise
- * - Delete the exercise or performance entry
  *
  * Used in: ExerciseListScreen, HomeScreen, GroupContentsScreen
  *
- * @param exerciseName Name of the exercise (used in delete confirmation)
  * @param isFavorite Current favorite status
  * @param onToggleFavorite Toggle favorite status callback
  * @param onNavigateToGraph Navigate to progress graph
  * @param onNavigateToExerciseCalendar Navigate to calendar view for this exercise
  * @param onEdit Navigate to edit exercise
- * @param onDelete Delete callback
  */
 
 @Composable
 fun ExerciseOptionsMenu(
-    exerciseName: String,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
     onNavigateToGraph: () -> Unit,
     onNavigateToExerciseCalendar: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit,
 ) {
     var showMenu by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
 
     // Menu trigger button
     IconButton(onClick = { showMenu = true }) {
@@ -118,45 +112,6 @@ fun ExerciseOptionsMenu(
                 )
             }
         )
-
-        // Delete
-        DropdownMenuItem(
-            text = { Text("Delete") },
-            onClick = {
-                showMenu = false
-                showDeleteDialog = true
-            },
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_symbol_delete),
-                    contentDescription = null
-                )
-            }
-        )
-    }
-
-    // Delete confirmation dialog
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Exercise") },
-            text = { Text("Are you sure you want to delete \"$exerciseName\"? This will also delete all performance data.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        onDelete()
-                    }
-                ) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
     }
 }
 
@@ -165,23 +120,19 @@ fun ExerciseOptionsMenu(
  *
  * Groups have different options than exercises (no graph/calendar).
  *
- * @param groupName Name of the group (used in delete confirmation)
  * @param isFavorite Current favorite status
  * @param onToggleFavorite Toggle favorite status callback
+ * @param onNavigateToGroupCalendar Navigate to calendar view for this group
  * @param onEdit Navigate to edit group
- * @param onDelete Delete group callback
  */
 @Composable
 fun GroupOptionsMenu(
-    groupName: String,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
     onNavigateToGroupCalendar: () -> Unit,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
 
     // Menu trigger button
     IconButton(onClick = { showMenu = true }) {
@@ -242,43 +193,6 @@ fun GroupOptionsMenu(
                     painter = painterResource(id = R.drawable.ic_symbol_edit),
                     contentDescription = null
                 )
-            }
-        )
-        DropdownMenuItem(
-            text = { Text("Delete") },
-            onClick = {
-                showMenu = false
-                showDeleteDialog = true
-            },
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_symbol_delete),
-                    contentDescription = null
-                )
-            }
-        )
-    }
-
-    // Delete confirmation dialog
-    if (showDeleteDialog) {
-        AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
-            title = { Text("Delete Group") },
-            text = { Text("Are you sure you want to delete \"$groupName\"? The exercises in this group will not be deleted.") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showDeleteDialog = false
-                        onDelete()
-                    }
-                ) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
-                    Text("Cancel")
-                }
             }
         )
     }

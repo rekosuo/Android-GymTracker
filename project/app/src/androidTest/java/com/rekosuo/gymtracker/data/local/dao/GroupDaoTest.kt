@@ -98,6 +98,43 @@ class GroupDaoTest {
         assertEquals("Push Day", favorites[0].name)
     }
 
+    @Test
+    fun updateGroup_modifiesExistingRecord() = runTest {
+        val id = groupDao.insertGroup(
+            ExerciseGroupEntity(name = "Push Day", createdAt = 1000L)
+        )
+
+        groupDao.updateGroup(ExerciseGroupEntity(id = id, name = "Push Day A", createdAt = 1000L))
+
+        val updated = groupDao.getGroupById(id)
+        assertEquals("Push Day A", updated!!.name)
+    }
+
+    @Test
+    fun updateFavoriteStatus_onlyChangesFavoriteField() = runTest {
+        val id = groupDao.insertGroup(
+            ExerciseGroupEntity(name = "Push Day", isFavorite = false, createdAt = 1000L)
+        )
+
+        groupDao.updateFavoriteStatus(id, true)
+
+        val updated = groupDao.getGroupById(id)
+        assertNotNull(updated)
+        assertTrue(updated!!.isFavorite)
+        assertEquals("Push Day", updated.name)     // name unchanged
+        assertEquals(1000L, updated.createdAt)     // createdAt unchanged
+    }
+
+    @Test
+    fun deleteGroup_removesFromDatabase() = runTest {
+        val id = groupDao.insertGroup(ExerciseGroupEntity(name = "Push Day", createdAt = 1000L))
+
+        val group = groupDao.getGroupById(id)!!
+        groupDao.deleteGroup(group)
+
+        assertNull(groupDao.getGroupById(id))
+    }
+
     // -- Many-to-many relationship tests --
 
     @Test
@@ -184,6 +221,35 @@ class GroupDaoTest {
         assertEquals("Squat", exercises[0].name)       // new first exercise
         assertEquals("Bench Press", exercises[1].name) // reordered
         // Fly is gone — it was replaced
+    }
+
+    @Test
+    fun deleteAllExercisesFromGroup_removesAllCrossRefs() = runTest {
+        // deleteAllExercisesFromGroup is the first step of replaceGroupExercises.
+        // Test it directly to ensure it clears cross-refs without touching the group itself.
+        val benchId = exerciseDao.insertExercise(
+            ExerciseEntity(name = "Bench Press", createdAt = 1000L)
+        )
+        val flyId = exerciseDao.insertExercise(
+            ExerciseEntity(name = "Chest Fly", createdAt = 1000L)
+        )
+        val groupId = groupDao.insertGroup(
+            ExerciseGroupEntity(name = "Push Day", createdAt = 1000L)
+        )
+        groupDao.insertExerciseGroupCrossRefs(
+            listOf(
+                ExerciseGroupCrossRef(benchId, groupId, 0),
+                ExerciseGroupCrossRef(flyId, groupId, 1)
+            )
+        )
+        assertEquals(2, groupDao.getOrderedExercisesForGroup(groupId).size)
+
+        groupDao.deleteAllExercisesFromGroup(groupId)
+
+        // Cross-refs gone, but the group and exercises still exist
+        assertTrue(groupDao.getOrderedExercisesForGroup(groupId).isEmpty())
+        assertNotNull(groupDao.getGroupById(groupId))
+        assertNotNull(exerciseDao.getExerciseById(benchId))
     }
 
     @Test

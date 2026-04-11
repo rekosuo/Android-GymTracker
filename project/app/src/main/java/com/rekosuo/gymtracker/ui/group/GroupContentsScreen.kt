@@ -150,11 +150,6 @@ fun GroupContentsScreen(
                                 },
                                 onNavigateToGraph = { onNavigateToGraph(exercise.id) },
                                 onNavigateToExerciseCalendar = { onNavigateToExerciseCalendar(exercise.id) },
-                                onDelete = {
-                                    viewModel.onEvent(
-                                        GroupContentsEvent.DeleteExercise(exercise)
-                                    )
-                                }
                             )
                         }
                     }

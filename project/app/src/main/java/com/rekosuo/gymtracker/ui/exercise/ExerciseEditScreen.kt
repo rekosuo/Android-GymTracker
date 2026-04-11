@@ -5,6 +5,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.painterResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -18,8 +19,9 @@ fun ExerciseEditScreen(
     viewModel: ExerciseEditViewModel = hiltViewModel()
 ) {
     val state by viewModel.state.collectAsState()
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
-    // Navigate back automatically when save completes
+    // Navigate back automatically when save or delete completes
     LaunchedEffect(state.isSaved) {
         if (state.isSaved) {
             onNavigateBack()
@@ -140,6 +142,52 @@ fun ExerciseEditScreen(
                 }
                 Text(if (exerciseId == null) "Create Exercise" else "Save Changes")
             }
+
+            // Delete button — only shown when editing an existing exercise
+            if (exerciseId != null && exerciseId != 0L) {
+                Button(
+                    onClick = { showDeleteDialog = true },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = !state.isLoading,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_symbol_delete),
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Delete Exercise")
+                }
+            }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = { Text("Delete Exercise") },
+            text = { Text("Are you sure you want to delete \"${state.exerciseName}\"? This will also delete all performance data.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        viewModel.onEvent(ExerciseEditEvent.DeleteExercise)
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }

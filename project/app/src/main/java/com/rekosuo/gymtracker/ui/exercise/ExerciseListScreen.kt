@@ -200,9 +200,6 @@ fun ExerciseListScreen(
                                     viewModel.onEvent(ExerciseListEvent.ToggleFavoriteGroup(group))
                                 },
                                 onNavigateToGroupCalendar = { onNavigateToGroupCalendar(group.id) },
-                                onDelete = {
-                                    viewModel.onEvent(ExerciseListEvent.DeleteGroup(group))
-                                }
                             )
                         }
                     }
@@ -230,9 +227,6 @@ fun ExerciseListScreen(
                                 },
                                 onNavigateToGraph = { onNavigateToGraph(exercise.id) },
                                 onNavigateToExerciseCalendar = { onNavigateToExerciseCalendar(exercise.id) },
-                                onDelete = {
-                                    viewModel.onEvent(ExerciseListEvent.DeleteExercise(exercise))
-                                }
                             )
                         }
                     }

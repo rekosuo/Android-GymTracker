@@ -185,7 +185,7 @@ class PerformanceDaoTest {
     }
 
     @Test
-    fun getPerformancesByDateRange_filtersCorrectly() = runTest {
+    fun getExercisePerformancesByDateRange_filtersCorrectly() = runTest {
         // BETWEEN is inclusive on both ends in SQL
         performanceDao.insertPerformance(
             PerformanceEntity(exerciseId = exerciseId, date = 1000L, notes = "before")
@@ -203,7 +203,7 @@ class PerformanceDaoTest {
             PerformanceEntity(exerciseId = exerciseId, date = 5000L, notes = "after")
         )
 
-        val rangeResults = performanceDao.getPerformancesByDateRange(
+        val rangeResults = performanceDao.getExercisePerformancesByDateRange(
             exerciseId, startDate = 2000L, endDate = 4000L
         ).first()
 
@@ -212,6 +212,139 @@ class PerformanceDaoTest {
         assertEquals(2000L, rangeResults[0].date)
         assertEquals(3000L, rangeResults[1].date)
         assertEquals(4000L, rangeResults[2].date)
+    }
+
+    @Test
+    fun getExercisePerformancesByDateRange_onlyReturnsMatchingExercise() = runTest {
+        // Verify the exerciseId filter is applied alongside the date range filter.
+        val otherExerciseId = exerciseDao.insertExercise(
+            ExerciseEntity(name = "Squat", createdAt = 1000L)
+        )
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = exerciseId, date = 2000L, notes = "bench")
+        )
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = otherExerciseId, date = 2000L, notes = "squat")
+        )
+
+        val results = performanceDao.getExercisePerformancesByDateRange(
+            exerciseId, startDate = 1000L, endDate = 3000L
+        ).first()
+
+        assertEquals(1, results.size)
+        assertEquals("bench", results[0].notes)
+    }
+
+    @Test
+    fun getMultipleExercisePerformancesByDateRange_returnsAllMatchingExercises() = runTest {
+        // Verify the IN (:exerciseIds) filter correctly aggregates performances
+        // from multiple exercises within the date range.
+        val squatId = exerciseDao.insertExercise(
+            ExerciseEntity(name = "Squat", createdAt = 1000L)
+        )
+        val deadliftId = exerciseDao.insertExercise(
+            ExerciseEntity(name = "Deadlift", createdAt = 1000L)
+        )
+
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = exerciseId, date = 2000L, notes = "bench")
+        )
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = squatId, date = 2500L, notes = "squat")
+        )
+        performanceDao.insertPerformance(
+            // Out of range — should be excluded
+            PerformanceEntity(exerciseId = deadliftId, date = 5000L, notes = "deadlift")
+        )
+
+        val results = performanceDao.getMultipleExercisePerformancesByDateRange(
+            exerciseIds = listOf(exerciseId, squatId, deadliftId),
+            startDate = 1000L,
+            endDate = 3000L
+        ).first()
+
+        assertEquals(2, results.size)
+        // ORDER BY date ASC
+        assertEquals("bench", results[0].notes)
+        assertEquals("squat", results[1].notes)
+    }
+
+    @Test
+    fun getMultipleExercisePerformancesByDateRange_excludesExercisesNotInList() = runTest {
+        // Performances from exercises not in the provided list must not appear.
+        val squatId = exerciseDao.insertExercise(
+            ExerciseEntity(name = "Squat", createdAt = 1000L)
+        )
+
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = exerciseId, date = 2000L, notes = "bench")
+        )
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = squatId, date = 2000L, notes = "squat")
+        )
+
+        val results = performanceDao.getMultipleExercisePerformancesByDateRange(
+            exerciseIds = listOf(exerciseId),  // squat not included
+            startDate = 1000L,
+            endDate = 3000L
+        ).first()
+
+        assertEquals(1, results.size)
+        assertEquals("bench", results[0].notes)
+    }
+
+    @Test
+    fun getAllPerformancesByDateRange_returnsAllExercisesInRange() = runTest {
+        // getAllPerformancesByDateRange has no exerciseId filter — it returns
+        // every performance in the date window regardless of exercise.
+        val squatId = exerciseDao.insertExercise(
+            ExerciseEntity(name = "Squat", createdAt = 1000L)
+        )
+
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = exerciseId, date = 2000L, notes = "bench")
+        )
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = squatId, date = 2500L, notes = "squat")
+        )
+        performanceDao.insertPerformance(
+            // Outside range — excluded
+            PerformanceEntity(exerciseId = exerciseId, date = 9000L, notes = "excluded")
+        )
+
+        val results = performanceDao.getAllPerformancesByDateRange(
+            startDate = 1000L, endDate = 3000L
+        ).first()
+
+        assertEquals(2, results.size)
+        // ORDER BY date ASC
+        assertEquals("bench", results[0].notes)
+        assertEquals("squat", results[1].notes)
+    }
+
+    @Test
+    fun getAllPerformancesByDateRange_boundariesAreInclusive() = runTest {
+        // Verify BETWEEN includes performances at exactly the start and end dates.
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = exerciseId, date = 1000L, notes = "start boundary")
+        )
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = exerciseId, date = 5000L, notes = "end boundary")
+        )
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = exerciseId, date = 999L, notes = "just before")
+        )
+        performanceDao.insertPerformance(
+            PerformanceEntity(exerciseId = exerciseId, date = 5001L, notes = "just after")
+        )
+
+        val results = performanceDao.getAllPerformancesByDateRange(
+            startDate = 1000L, endDate = 5000L
+        ).first()
+
+        assertEquals(2, results.size)
+        assertEquals("start boundary", results[0].notes)
+        assertEquals("end boundary", results[1].notes)
     }
 
     @Test
