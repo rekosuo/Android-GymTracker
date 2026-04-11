@@ -151,8 +151,8 @@ class PerformanceEntryViewModel @Inject constructor(
                         }
                     }
                 } else {
-                    // New performance - start with one empty weight row
-                    val initialRow = WeightRow(weight = 0f, reps = emptyList(), startOrder = 0)
+                    // New performance - start with one empty weight row with one rep
+                    val initialRow = WeightRow(weight = 0f, reps = listOf(0), startOrder = 0)
                     _state.update {
                         it.copy(
                             weightRows = listOf(initialRow),
@@ -196,7 +196,7 @@ class PerformanceEntryViewModel @Inject constructor(
             val lastWeight = currentState.weightRows.lastOrNull()?.weight ?: 0f
             val newRow = WeightRow(
                 weight = lastWeight,
-                reps = emptyList(),
+                reps = listOf(0),
                 startOrder = currentState.weightRows.nextStartOrder()
             )
             val newRows = currentState.weightRows + newRow

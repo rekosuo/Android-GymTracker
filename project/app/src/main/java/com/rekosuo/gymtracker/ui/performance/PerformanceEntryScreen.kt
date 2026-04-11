@@ -41,6 +41,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -51,6 +52,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
@@ -64,6 +66,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.rekosuo.gymtracker.R
 import com.rekosuo.gymtracker.domain.model.WeightRow
 import com.rekosuo.gymtracker.ui.components.PerformanceOptionsMenu
+import kotlinx.coroutines.delay
 
 /**
  * Performance Entry Screen - The Dynamic Matrix Grid
@@ -171,6 +174,22 @@ fun PerformanceEntryScreen(
                     }
                 }
 
+                // Track row count for auto-focus on new row creation
+                var prevRowCount by remember { mutableIntStateOf(state.weightRows.size) }
+                val weightFocusRequesters = remember(state.weightRows.size) {
+                    List(state.weightRows.size) { FocusRequester() }
+                }
+                val keyboardController = LocalSoftwareKeyboardController.current
+
+                LaunchedEffect(state.weightRows.size) {
+                    if (state.weightRows.size > prevRowCount) {
+                        delay(100)
+                        weightFocusRequesters.last().requestFocus()
+                        keyboardController?.show()
+                    }
+                    prevRowCount = state.weightRows.size
+                }
+
                 // Main content - Dynamic Matrix Grid
                 LazyColumn(
                     modifier = Modifier
@@ -186,6 +205,7 @@ fun PerformanceEntryScreen(
                     ) { rowIndex, weightRow ->
                         WeightRowItem(
                             row = weightRow,
+                            weightFocusRequester = weightFocusRequesters[rowIndex],
                             onWeightChange = { weight ->
                                 viewModel.onEvent(
                                     PerformanceEntryEvent.UpdateWeight(rowIndex, weight)
@@ -269,6 +289,7 @@ fun PerformanceEntryScreen(
 @Composable
 fun WeightRowItem(
     row: WeightRow,
+    weightFocusRequester: FocusRequester,
     onWeightChange: (Float) -> Unit,
     onRepChange: (repIndex: Int, reps: Int) -> Unit,
     onAddRep: () -> Unit,
@@ -277,6 +298,22 @@ fun WeightRowItem(
     modifier: Modifier = Modifier
 ) {
     var showRowMenu by remember { mutableStateOf(false) }
+
+    // Track rep count for auto-focus on new rep creation
+    var prevRepCount by remember { mutableIntStateOf(row.reps.size) }
+    val repFocusRequesters = remember(row.reps.size) {
+        List(row.reps.size) { FocusRequester() }
+    }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(row.reps.size) {
+        if (row.reps.size > prevRepCount) {
+            delay(100)
+            repFocusRequesters.last().requestFocus()
+            keyboardController?.show()
+        }
+        prevRepCount = row.reps.size
+    }
 
     Row(
         modifier = modifier
@@ -290,7 +327,8 @@ fun WeightRowItem(
             WeightInput(
                 weight = row.weight,
                 onWeightChange = onWeightChange,
-                onLongClick = { showRowMenu = true }
+                onLongClick = { showRowMenu = true },
+                focusRequester = weightFocusRequester
             )
 
             DropdownMenu(
@@ -318,7 +356,8 @@ fun WeightRowItem(
             RepInput(
                 reps = reps,
                 onRepsChange = { newReps -> onRepChange(repIndex, newReps) },
-                onDelete = { onDeleteRep(repIndex) }
+                onDelete = { onDeleteRep(repIndex) },
+                focusRequester = repFocusRequesters[repIndex]
             )
         }
 
@@ -340,13 +379,14 @@ fun WeightInput(
     weight: Float,
     onWeightChange: (Float) -> Unit,
     onLongClick: () -> Unit,
+    focusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
     var textValue by remember(weight) {
         mutableStateOf(if (weight == 0f) "" else weight.toString().removeSuffix(".0"))
     }
     var isFocused by remember { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Box(
         modifier = modifier
@@ -428,7 +468,10 @@ fun WeightInput(
                 .combinedClickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() },
-                    onClick = { focusRequester.requestFocus() },
+                    onClick = {
+                        focusRequester.requestFocus()
+                        keyboardController?.show()
+                    },
                     onLongClick = onLongClick
                 )
         )
@@ -444,6 +487,7 @@ fun RepInput(
     reps: Int,
     onRepsChange: (Int) -> Unit,
     onDelete: () -> Unit,
+    focusRequester: FocusRequester,
     modifier: Modifier = Modifier
 ) {
     var textValue by remember(reps) {
@@ -451,7 +495,7 @@ fun RepInput(
     }
     var isFocused by remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
 
     Box(
         modifier = modifier.size(48.dp)
@@ -522,7 +566,10 @@ fun RepInput(
                 .combinedClickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() },
-                    onClick = { focusRequester.requestFocus() },
+                    onClick = {
+                        focusRequester.requestFocus()
+                        keyboardController?.show()
+                    },
                     onLongClick = { showMenu = true }
                 )
         )

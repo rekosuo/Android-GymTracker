@@ -92,7 +92,7 @@ class PerformanceEntryViewModelTest {
     // -- New performance initialization --
 
     @Test
-    fun `new performance starts with one empty weight row`() = runTest {
+    fun `new performance starts with one weight row with one rep`() = runTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
@@ -100,7 +100,7 @@ class PerformanceEntryViewModelTest {
         assertEquals("Bench Press", state.exerciseName)
         assertEquals(1, state.weightRows.size)
         assertEquals(0f, state.weightRows[0].weight)
-        assertTrue(state.weightRows[0].reps.isEmpty())
+        assertEquals(listOf(0), state.weightRows[0].reps)
         assertFalse(state.isLoading)
     }
 
@@ -119,7 +119,7 @@ class PerformanceEntryViewModelTest {
         val rows = viewModel.state.value.weightRows
         assertEquals(2, rows.size)
         assertEquals(20f, rows[1].weight) // inherited from last row
-        assertTrue(rows[1].reps.isEmpty())
+        assertEquals(listOf(0), rows[1].reps) // starts with one rep
     }
 
     @Test
@@ -130,8 +130,8 @@ class PerformanceEntryViewModelTest {
         viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(rowIndex = 0))
 
         val reps = viewModel.state.value.weightRows[0].reps
-        assertEquals(1, reps.size)
-        assertEquals(0, reps[0]) // default value for user to edit
+        assertEquals(2, reps.size) // initial rep + added rep
+        assertEquals(0, reps[1]) // default value for user to edit
     }
 
     @Test
@@ -143,7 +143,7 @@ class PerformanceEntryViewModelTest {
         viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(rowIndex = 0))
         viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(rowIndex = 0))
 
-        assertEquals(3, viewModel.state.value.weightRows[0].reps.size)
+        assertEquals(4, viewModel.state.value.weightRows[0].reps.size) // initial rep + 3 added
     }
 
     // -- Updating values --
@@ -179,8 +179,7 @@ class PerformanceEntryViewModelTest {
 
         // Build a workout: 20kg x 10, 20kg x 8
         viewModel.onEvent(PerformanceEntryEvent.UpdateWeight(0, 20f))
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
-        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 0, 10))
+        viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 0, 10)) // use initial rep
         viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
         viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 1, 8))
 
@@ -201,11 +200,9 @@ class PerformanceEntryViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Create two rows
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
+        // Create two rows (each starts with one initial rep)
         viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 0, 10))
         viewModel.onEvent(PerformanceEntryEvent.AddWeightRow)
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(1))
         viewModel.onEvent(PerformanceEntryEvent.UpdateRep(1, 0, 8))
 
         // Delete the first row
@@ -222,8 +219,7 @@ class PerformanceEntryViewModelTest {
         val viewModel = createViewModel()
         advanceUntilIdle()
 
-        // Add two reps
-        viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
+        // Set up two reps (use initial rep + add one more)
         viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 0, 10))
         viewModel.onEvent(PerformanceEntryEvent.AddRepToRow(0))
         viewModel.onEvent(PerformanceEntryEvent.UpdateRep(0, 1, 8))
