@@ -53,6 +53,12 @@ sealed class Screen(val route: String) {
     }
 }
 
+private fun NavHostController.safePopBackStack() {
+    if (currentBackStackEntry?.destination?.route != Screen.Home.route) {
+        popBackStack()
+    }
+}
+
 @Composable
 fun NavGraph(
     navController: NavHostController,
@@ -100,7 +106,7 @@ fun NavGraph(
         // Exercise List Screen
         composable(Screen.ExerciseList.route) {
             ExerciseListScreen(
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.safePopBackStack() },
                 onExerciseClick = { exerciseId ->
                     navController.navigate(Screen.PerformanceEntry.createRoute(exerciseId))
                 },
@@ -147,7 +153,7 @@ fun NavGraph(
             val exerciseId = backStackEntry.arguments?.getLong("exerciseId")?.takeIf { it != 0L }
             ExerciseEditScreen(
                 exerciseId = exerciseId,
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.safePopBackStack() }
             )
         }
 
@@ -162,7 +168,7 @@ fun NavGraph(
             )
         ) {
             GroupEditScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.safePopBackStack() }
             )
         }
 
@@ -175,7 +181,7 @@ fun NavGraph(
         ) { backStackEntry ->
             val groupId = backStackEntry.arguments?.getLong("groupId") ?: 0L
             GroupContentsScreen(
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.safePopBackStack() },
                 onExerciseClick = { exerciseId ->
                     navController.navigate(Screen.PerformanceEntry.createRoute(exerciseId))
                 },
@@ -208,7 +214,7 @@ fun NavGraph(
             val exerciseId = backStackEntry.arguments?.getLong("exerciseId") ?: 0L
 
             PerformanceEntryScreen(
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.safePopBackStack() },
                 onNavigateToGraph = {
                     navController.navigate(Screen.ProgressGraph.createRoute(exerciseId))
                 },
@@ -229,7 +235,7 @@ fun NavGraph(
             )
         ) {
             ProgressGraphScreen(
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.safePopBackStack() },
                 onNavigateToPerformanceEntry = { exId, perfId ->
                     navController.navigate(Screen.PerformanceEntry.createRoute(exId, perfId))
                 }
@@ -251,7 +257,7 @@ fun NavGraph(
             )
         ) {
             CalendarScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.safePopBackStack() }
             )
         }
     }
