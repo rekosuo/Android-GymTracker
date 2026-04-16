@@ -330,8 +330,15 @@ fun LineChart(
                     WeightDisplayMode.RANGE -> dataPoints.map { it.maxWeight }
                 }
 
-                val minWeight = (weights.minOrNull() ?: 0f) * 0.9f
-                val maxWeight = (weights.maxOrNull() ?: 100f) * 1.1f
+                // Compute nice whole-number Y-axis bounds
+                val rawMin = weights.minOrNull() ?: 0f
+                val rawMax = weights.maxOrNull() ?: 100f
+                val gridLineCount = 4
+                val axisMin = kotlin.math.floor(rawMin).toInt() - 1
+                val step = kotlin.math.ceil((kotlin.math.ceil(rawMax).toInt() + 1 - axisMin).toFloat() / gridLineCount).toInt().coerceAtLeast(1)
+                val axisMax = axisMin + step * gridLineCount
+                val minWeight = axisMin.toFloat()
+                val maxWeight = axisMax.toFloat()
                 val weightRange = maxWeight - minWeight
 
                 val minDate = dataPoints.minOf { it.date }
@@ -339,7 +346,6 @@ fun LineChart(
                 val dateRange = (maxDate - minDate).coerceAtLeast(1)
 
                 // Draw grid lines
-                val gridLineCount = 4
                 for (i in 0..gridLineCount) {
                     val y = paddingTop + (chartHeight * i / gridLineCount)
                     drawLine(
@@ -349,10 +355,10 @@ fun LineChart(
                         strokeWidth = 1.dp.toPx()
                     )
 
-                    // Y-axis labels
-                    val weightValue = maxWeight - (weightRange * i / gridLineCount)
+                    // Y-axis labels (guaranteed whole numbers)
+                    val weightValue = axisMax - step * i
                     drawContext.canvas.nativeCanvas.drawText(
-                        weightValue.formatWeight(),
+                        weightValue.toString(),
                         paddingLeft - 8.dp.toPx(),
                         y + 4.dp.toPx(),
                         android.graphics.Paint().apply {
@@ -363,28 +369,64 @@ fun LineChart(
                     )
                 }
 
-                // Draw the line path
-                val path = Path()
-                val points = mutableListOf<Offset>()
-
-                dataPoints.forEachIndexed { index, point ->
+                // Compute pixel positions for each data point
+                val points = dataPoints.map { point ->
                     val weight = when (displayMode) {
                         WeightDisplayMode.MAX -> point.maxWeight
                         WeightDisplayMode.AVERAGE -> point.avgWeight
                         WeightDisplayMode.RANGE -> point.maxWeight
                     }
-
                     val x = paddingLeft + (chartWidth * (point.date - minDate) / dateRange)
-                    val y =
-                        paddingTop + chartHeight - (chartHeight * (weight - minWeight) / weightRange)
+                    val y = paddingTop + chartHeight - (chartHeight * (weight - minWeight) / weightRange)
+                    Offset(x, y)
+                }
 
-                    points.add(Offset(x, y))
+                // Build smooth curve using Catmull-Rom-to-Bézier conversion
+                val path = Path()
+                path.moveTo(points.first().x, points.first().y)
 
-                    if (index == 0) {
-                        path.moveTo(x, y)
-                    } else {
-                        path.lineTo(x, y)
+                // Monotone cubic tangents (Fritsch-Carlson)
+                // Prevents overshoot: if slopes on either side differ in sign
+                // or either is zero, the tangent is zeroed out, keeping the
+                // curve flat between equal-weight points.
+                val slopes = (0 until points.lastIndex).map { i ->
+                    val dx = points[i + 1].x - points[i].x
+                    if (dx == 0f) 0f else (points[i + 1].y - points[i].y) / dx
+                }
+                val tangents = points.indices.map { i ->
+                    val dx = when (i) {
+                        0 -> points[1].x - points[0].x
+                        points.lastIndex -> points[points.lastIndex].x - points[points.lastIndex - 1].x
+                        else -> points[i + 1].x - points[i - 1].x
                     }
+                    val dy = when (i) {
+                        0 -> slopes[0] * dx
+                        points.lastIndex -> slopes[slopes.lastIndex] * dx
+                        else -> {
+                            val sL = slopes[i - 1]
+                            val sR = slopes[i]
+                            // Zero tangent when slopes differ in sign or either is flat
+                            if (sL * sR <= 0f) 0f
+                            else {
+                                // Harmonic mean of slopes, scaled by dx
+                                val m = 2f * sL * sR / (sL + sR)
+                                m * dx
+                            }
+                        }
+                    }
+                    Offset(dx, dy)
+                }
+
+                for (i in 0 until points.lastIndex) {
+                    val cp1 = Offset(
+                        points[i].x + tangents[i].x / 3f,
+                        points[i].y + tangents[i].y / 3f
+                    )
+                    val cp2 = Offset(
+                        points[i + 1].x - tangents[i + 1].x / 3f,
+                        points[i + 1].y - tangents[i + 1].y / 3f
+                    )
+                    path.cubicTo(cp1.x, cp1.y, cp2.x, cp2.y, points[i + 1].x, points[i + 1].y)
                 }
 
                 // Draw the line
