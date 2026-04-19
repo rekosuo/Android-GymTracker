@@ -55,4 +55,15 @@ interface PerformanceDao {
 
     @Delete
     suspend fun deletePerformance(performance: PerformanceEntity)
+
+    // Backup operations
+
+    @Query("SELECT * FROM performances ORDER BY id ASC")
+    suspend fun getAllForBackup(): List<PerformanceEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(performances: List<PerformanceEntity>)
+
+    @Query("DELETE FROM performances")
+    suspend fun deleteAll()
 }

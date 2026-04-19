@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 
 // Table for storing exercise performances
+@Serializable
 @Entity(
     tableName = "performances",
     foreignKeys = [

@@ -35,4 +35,15 @@ interface ExerciseDao {
 
     @Query("UPDATE exercises SET isFavorite = :isFavorite WHERE id = :id")
     suspend fun updateFavoriteStatus(id: Long, isFavorite: Boolean)
+
+    // Backup operations (one-shot queries, not Flow-based)
+
+    @Query("SELECT * FROM exercises ORDER BY id ASC")
+    suspend fun getAllForBackup(): List<ExerciseEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAll(exercises: List<ExerciseEntity>)
+
+    @Query("DELETE FROM exercises")
+    suspend fun deleteAll()
 }

@@ -4,8 +4,10 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
+import kotlinx.serialization.Serializable
 
 // Table that links exercises to groups in a many-to-many relationship
+@Serializable
 @Entity(
     tableName = "exercise_group_cross_ref",
     primaryKeys = ["exerciseId", "groupId"],

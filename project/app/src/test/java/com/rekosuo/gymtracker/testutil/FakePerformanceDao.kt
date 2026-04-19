@@ -84,4 +84,16 @@ class FakePerformanceDao : PerformanceDao {
     override suspend fun deletePerformance(performance: PerformanceEntity) {
         performances.update { current -> current.filter { it.id != performance.id } }
     }
+
+    override suspend fun getAllForBackup(): List<PerformanceEntity> {
+        return performances.value.sortedBy { it.id }
+    }
+
+    override suspend fun insertAll(performances: List<PerformanceEntity>) {
+        performances.forEach { insertPerformance(it) }
+    }
+
+    override suspend fun deleteAll() {
+        performances.update { emptyList() }
+    }
 }

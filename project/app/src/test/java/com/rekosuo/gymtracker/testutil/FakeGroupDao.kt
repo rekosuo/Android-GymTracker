@@ -85,4 +85,24 @@ class FakeGroupDao(
         deleteAllExercisesFromGroup(groupId)
         insertExerciseGroupCrossRefs(crossRefs)
     }
+
+    override suspend fun getAllGroupsForBackup(): List<ExerciseGroupEntity> {
+        return groups.value.sortedBy { it.id }
+    }
+
+    override suspend fun insertAllGroups(groups: List<ExerciseGroupEntity>) {
+        groups.forEach { insertGroup(it) }
+    }
+
+    override suspend fun deleteAllGroups() {
+        groups.update { emptyList() }
+    }
+
+    override suspend fun getAllCrossRefsForBackup(): List<ExerciseGroupCrossRef> {
+        return crossRefs.value.sortedWith(compareBy({ it.groupId }, { it.orderIndex }))
+    }
+
+    override suspend fun deleteAllCrossRefs() {
+        crossRefs.update { emptyList() }
+    }
 }

@@ -1,5 +1,7 @@
 package com.rekosuo.gymtracker.ui.home
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,6 +17,12 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.rekosuo.gymtracker.R
 import com.rekosuo.gymtracker.ui.components.ExerciseListItem
 import com.rekosuo.gymtracker.ui.components.GroupListItem
+import com.rekosuo.gymtracker.ui.settings.BackupEvent
+import com.rekosuo.gymtracker.ui.settings.BackupMessage
+import com.rekosuo.gymtracker.ui.settings.BackupViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -29,11 +37,59 @@ fun HomeScreen(
     onNavigateToGroupCalendar: (Long) -> Unit,
     onEditExercise: (Long) -> Unit,
     onEditGroup: (Long) -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    viewModel: HomeViewModel = hiltViewModel(),
+    backupViewModel: BackupViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsState()
+    val backupState by backupViewModel.state.collectAsState()
+    val snackbarHostState = remember { SnackbarHostState() }
+    var showImportConfirm by remember { mutableStateOf(false) }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) backupViewModel.onEvent(BackupEvent.ExportTo(uri))
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) backupViewModel.onEvent(BackupEvent.ImportFrom(uri))
+    }
+
+    LaunchedEffect(backupState.message) {
+        val message = backupState.message ?: return@LaunchedEffect
+        val text = when (message) {
+            is BackupMessage.Success -> message.text
+            is BackupMessage.Error -> message.text
+        }
+        snackbarHostState.showSnackbar(text)
+        backupViewModel.onEvent(BackupEvent.DismissMessage)
+    }
+
+    if (showImportConfirm) {
+        AlertDialog(
+            onDismissRequest = { showImportConfirm = false },
+            title = { Text("Import data?") },
+            text = {
+                Text(
+                    "Importing will replace ALL current data with the contents of " +
+                        "the selected file. This cannot be undone."
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showImportConfirm = false
+                    importLauncher.launch(arrayOf("application/json"))
+                }) { Text("Choose file") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showImportConfirm = false }) { Text("Cancel") }
+            }
+        )
+    }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = { Text("Gym Progress Tracker") },
@@ -44,6 +100,15 @@ fun HomeScreen(
                             contentDescription = "Calendar"
                         )
                     }
+                    HomeOverflowMenu(
+                        isBusy = backupState.isBusy,
+                        onExportClick = {
+                            val stamp = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US)
+                                .format(Date())
+                            exportLauncher.launch("gymtracker-backup-$stamp.json")
+                        },
+                        onImportClick = { showImportConfirm = true },
+                    )
                 }
             )
         }
@@ -202,5 +267,36 @@ fun HomeScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun HomeOverflowMenu(
+    isBusy: Boolean,
+    onExportClick: () -> Unit,
+    onImportClick: () -> Unit,
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    IconButton(onClick = { expanded = true }, enabled = !isBusy) {
+        if (isBusy) {
+            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+        } else {
+            Icon(
+                painter = painterResource(id = R.drawable.ic_symbol_more_vert),
+                contentDescription = "Options"
+            )
+        }
+    }
+
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        DropdownMenuItem(
+            text = { Text("Export data") },
+            onClick = { expanded = false; onExportClick() }
+        )
+        DropdownMenuItem(
+            text = { Text("Import data") },
+            onClick = { expanded = false; onImportClick() }
+        )
     }
 }

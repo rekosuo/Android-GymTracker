@@ -50,4 +50,21 @@ interface GroupDao {
         deleteAllExercisesFromGroup(groupId)
         insertExerciseGroupCrossRefs(crossRefs)
     }
+
+    // Backup operations
+
+    @Query("SELECT * FROM exercise_groups ORDER BY id ASC")
+    suspend fun getAllGroupsForBackup(): List<ExerciseGroupEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAllGroups(groups: List<ExerciseGroupEntity>)
+
+    @Query("DELETE FROM exercise_groups")
+    suspend fun deleteAllGroups()
+
+    @Query("SELECT * FROM exercise_group_cross_ref ORDER BY groupId ASC, orderIndex ASC")
+    suspend fun getAllCrossRefsForBackup(): List<ExerciseGroupCrossRef>
+
+    @Query("DELETE FROM exercise_group_cross_ref")
+    suspend fun deleteAllCrossRefs()
 }

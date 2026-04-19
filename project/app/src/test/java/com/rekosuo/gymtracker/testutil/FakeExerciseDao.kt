@@ -62,4 +62,16 @@ class FakeExerciseDao : ExerciseDao {
             current.map { if (it.id == id) it.copy(isFavorite = isFavorite) else it }
         }
     }
+
+    override suspend fun getAllForBackup(): List<ExerciseEntity> {
+        return exercises.value.sortedBy { it.id }
+    }
+
+    override suspend fun insertAll(exercises: List<ExerciseEntity>) {
+        exercises.forEach { insertExercise(it) }
+    }
+
+    override suspend fun deleteAll() {
+        exercises.update { emptyList() }
+    }
 }
