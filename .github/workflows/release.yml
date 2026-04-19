@@ -9,7 +9,11 @@ permissions:
   contents: write
 
 jobs:
+  instrumented-tests:
+    uses: ./.github/workflows/instrumented-tests.yml
+
   release:
+    needs: instrumented-tests
     runs-on: ubuntu-latest
     defaults:
       run:
