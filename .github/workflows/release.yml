@@ -9,6 +9,8 @@ permissions:
   contents: write
 
 jobs:
+  tests:
+    uses: ./.github/workflows/tests.yml
   instrumented-tests:
     uses: ./.github/workflows/instrumented-tests.yml
 
@@ -33,9 +35,6 @@ jobs:
 
       - name: Make gradlew executable
         run: chmod +x gradlew
-
-      - name: Run unit tests
-        run: ./gradlew test
 
       - name: Decode keystore
         env:
