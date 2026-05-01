@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  tests:
+  test:
     uses: ./.github/workflows/test.yml
   instrumented-tests:
     uses: ./.github/workflows/instrumented-tests.yml
