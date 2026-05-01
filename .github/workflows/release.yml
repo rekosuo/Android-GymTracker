@@ -10,9 +10,9 @@ permissions:
 
 jobs:
   tests:
-    uses: ./.github/workflows/tests.yml
+    uses: .github/workflows/tests.yml
   instrumented-tests:
-    uses: ./.github/workflows/instrumented-tests.yml
+    uses: .github/workflows/instrumented-tests.yml
 
   release:
     needs: instrumented-tests
