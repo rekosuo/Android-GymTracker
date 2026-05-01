@@ -196,6 +196,9 @@ fun NavGraph(
                 },
                 onNavigateToGroupCalendar = {
                     navController.navigate(Screen.Calendar.createRoute(groupId = groupId))
+                },
+                onEditGroup = {
+                    navController.navigate(Screen.GroupEdit.createRoute(groupId = groupId))
                 }
             )
         }

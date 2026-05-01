@@ -63,6 +63,7 @@ fun ExerciseListScreen(
             TopAppBar(
                 title = { Text("Exercises & Groups") },
                 navigationIcon = {
+                    // Navigate back arrow
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_symbol_arrow_back),
@@ -70,14 +71,15 @@ fun ExerciseListScreen(
                         )
                     }
                 },
-                // Menu button to open New Exercise and New Group
                 actions = {
+                    // Calendar button (ALL mode)
                     IconButton(onClick = onNavigateToAllCalendar) {
                         Icon(
                             painter = painterResource(id = R.drawable.ic_symbol_calendar_today),
                             contentDescription = "Calendar"
                         )
                     }
+                    // Menu button to open New Exercise and New Group
                     IconButton(onClick = { showMenu = true }) {
                         Icon(painter = painterResource(id = R.drawable.ic_symbol_more_vert), "Menu")
                     }
