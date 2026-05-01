@@ -15,7 +15,7 @@ jobs:
     uses: ./.github/workflows/instrumented-tests.yml
 
   release:
-    needs: [tests, instrumented-tests]
+    needs: [test, instrumented-tests]
     runs-on: ubuntu-latest
     defaults:
       run:
