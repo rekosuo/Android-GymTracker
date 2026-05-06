@@ -1,7 +1,17 @@
 package com.rekosuo.gymtracker.ui.components
 
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.painterResource
 import com.rekosuo.gymtracker.R
 
@@ -213,8 +223,6 @@ fun GroupOptionsMenu(
  */
 @Composable
 fun PerformanceOptionsMenu(
-    onNavigateToGraph: () -> Unit,
-    onNavigateToExerciseCalendar: () -> Unit,
     onEditExercise: () -> Unit,
     onDeletePerformance: () -> Unit,
     showDeleteOption: Boolean
@@ -235,32 +243,6 @@ fun PerformanceOptionsMenu(
         expanded = showMenu,
         onDismissRequest = { showMenu = false }
     ) {
-        DropdownMenuItem(
-            text = { Text("Graph") },
-            onClick = {
-                showMenu = false
-                onNavigateToGraph()
-            },
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_symbol_show_chart),
-                    contentDescription = null
-                )
-            }
-        )
-        DropdownMenuItem(
-            text = { Text("Calendar") },
-            onClick = {
-                showMenu = false
-                onNavigateToExerciseCalendar()
-            },
-            leadingIcon = {
-                Icon(
-                    painter = painterResource(id = R.drawable.ic_symbol_calendar_today),
-                    contentDescription = null
-                )
-            }
-        )
         DropdownMenuItem(
             text = { Text("Edit Exercise") },
             onClick = {

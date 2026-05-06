@@ -112,9 +112,22 @@ fun PerformanceEntryScreen(
                     }
                 },
                 actions = {
+                    // Graph button
+                    IconButton(onClick = onNavigateToGraph) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_symbol_show_chart),
+                            contentDescription = "Exercise Graph"
+                        )
+                    }
+                    // Calendar button (EXERCISE mode)
+                    IconButton(onClick = onNavigateToExerciseCalendar) {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_symbol_calendar_today),
+                            contentDescription = "Exercise Calendar"
+                        )
+                    }
+                    // Options menu, now only has the edit exercise item
                     PerformanceOptionsMenu(
-                        onNavigateToGraph = onNavigateToGraph,
-                        onNavigateToExerciseCalendar = onNavigateToExerciseCalendar,
                         onEditExercise = onEditExercise,
                         onDeletePerformance = {
                             viewModel.onEvent(PerformanceEntryEvent.DeletePerformance)
