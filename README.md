@@ -22,6 +22,7 @@ You can:
 
 1. Menu items to view latest exercise performances.
 2. Include rep tracking in the Graph view.
+3. Finnish localization
 
 ### Build
 
